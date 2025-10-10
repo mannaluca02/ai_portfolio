@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.api import chat, health
+from app.middleware.rate_limiter import PathBasedRateLimiter
 import logging
 
 # Configure logging
@@ -16,7 +18,10 @@ app = FastAPI(
     title="Portfolio RAG Chatbot API",
     description="Backend API für Portfolio mit RAG-basiertem Chatbot",
     version="1.0.0",
-    debug=settings.DEBUG
+    debug=settings.DEBUG,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # CORS Middleware
@@ -28,24 +33,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "Portfolio RAG Chatbot API",
-        "version": "1.0.0",
-        "status": "running"
+# Rate Limiting Middleware (path-specific)
+app.add_middleware(
+    PathBasedRateLimiter,
+    limits={
+        "/api/chat": (settings.RATE_LIMIT_NATURAL_MODE, 5),  # Natural mode: 10 req/min, burst 5
     }
+)
 
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "environment": settings.ENVIRONMENT
-    }
+# Include routers
+app.include_router(health.router)
+app.include_router(chat.router)
 
 
 @app.on_event("startup")
