@@ -205,3 +205,42 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ============================================
+# Project Specific
+# ============================================
+
+# ML Models (Large files - should NOT be in git)
+portfolio-backend/app/ml_models/
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+*.safetensors
+
+# IDE Settings (IntelliJ/PyCharm)
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+portfolio-backend/.env
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log.*
+
+# Temporary test files
+*_test_output.txt
