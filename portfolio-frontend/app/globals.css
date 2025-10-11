@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #F5F3EE;
+  --cream-dark: #E8E5DD;
+  --text-light: #1A1A1A;
+  --text-secondary-light: #666666;
+
+  --dark-bg: #1A1A1A;
+  --dark-bg-secondary: #252525;
+  --text-dark: #E8E5DD;
+  --text-secondary-dark: #A0A0A0;
+
+  --tekhelet: #3D348B;
+}
+
+@layer base {
+  * {
+    @apply border-text-light/10 dark:border-text-dark/10;
+  }
+
+  body {
+    @apply bg-cream dark:bg-dark-bg text-text-light dark:text-text-dark;
+    @apply antialiased;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Dark mode handler */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+  }
+}
