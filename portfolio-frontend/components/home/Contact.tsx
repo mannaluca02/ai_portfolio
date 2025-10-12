@@ -48,8 +48,19 @@ export default function Contact() {
     setSubmitStatus('idle')
 
     try {
-      // Simulate form submission (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Fehler beim Senden der E-Mail')
+      }
 
       // Reset form on success
       setFormData({ name: '', email: '', subject: '', message: '' })

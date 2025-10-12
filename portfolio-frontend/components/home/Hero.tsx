@@ -5,11 +5,17 @@ interface HeroProps {
 }
 
 export default function Hero({ onChatClick }: HeroProps) {
-  const scrollToAbout = () => {
-    const aboutSection = document.getElementById('about')
-    if (aboutSection) {
-      aboutSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId)
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
+  }
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault()
+    const sectionId = href.replace('#', '')
+    scrollToSection(sectionId)
   }
 
   return (
@@ -67,13 +73,15 @@ export default function Hero({ onChatClick }: HeroProps) {
         <div className="flex flex-wrap gap-6 text-sm animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <a
             href="#about"
-            className="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors underline underline-offset-4 decoration-1"
+            onClick={(e) => handleLinkClick(e, '#about')}
+            className="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors underline underline-offset-4 decoration-1 cursor-pointer"
           >
             Mehr erfahren
           </a>
           <a
             href="#contact"
-            className="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors underline underline-offset-4 decoration-1"
+            onClick={(e) => handleLinkClick(e, '#contact')}
+            className="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors underline underline-offset-4 decoration-1 cursor-pointer"
           >
             Kontakt
           </a>
@@ -82,7 +90,7 @@ export default function Hero({ onChatClick }: HeroProps) {
 
       {/* Scroll Indicator */}
       <button
-        onClick={scrollToAbout}
+        onClick={() => scrollToSection('about')}
         className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer hover:opacity-70 transition-opacity"
         aria-label="Scroll to about section"
       >

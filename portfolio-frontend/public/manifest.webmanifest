@@ -1,0 +1,13 @@
+{
+  "name": "Luca Manna - Portfolio",
+  "short_name": "LM Portfolio",
+  "description": "Data Science Student & Full-Stack Developer aus Basel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F3EE",
+  "theme_color": "#3D348B",
+  "lang": "de-CH",
+  "scope": "/",
+  "orientation": "portrait-primary",
+  "categories": ["portfolio", "developer", "data-science"]
+}
