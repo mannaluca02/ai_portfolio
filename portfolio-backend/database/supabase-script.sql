@@ -28,7 +28,9 @@ CREATE TYPE project_type AS ENUM (
     'Personal',
     'Professional',
     'Open Source',
-    'Client Work'
+    'Client Work',
+    'Academic',
+    'Startup'
 );
 
 -- Skill Level

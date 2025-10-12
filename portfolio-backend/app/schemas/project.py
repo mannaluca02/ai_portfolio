@@ -19,7 +19,7 @@ class ProjectResponse(BaseModel):
     project_url: Optional[str] = None
     github_url: Optional[str] = None
     demo_url: Optional[str] = None
-    technologies: List[str]
+    technologies: Optional[List[str]] = []
     your_role: Optional[str] = None
     team_size: Optional[int] = None
     client_company: Optional[str] = None
