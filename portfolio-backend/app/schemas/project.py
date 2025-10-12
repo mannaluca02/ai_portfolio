@@ -13,6 +13,7 @@ class ProjectResponse(BaseModel):
     name: str
     description: str
     project_type: str
+    featured: bool
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     project_url: Optional[str] = None

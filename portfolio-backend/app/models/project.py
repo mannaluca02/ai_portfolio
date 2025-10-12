@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Date, TIMESTAMP, ARRAY
+from sqlalchemy import Column, Integer, String, Text, Date, TIMESTAMP, ARRAY, Boolean
 from sqlalchemy.dialects.postgresql import ENUM
 from pgvector.sqlalchemy import Vector
 from app.database import Base
@@ -27,7 +27,8 @@ class Project(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     project_type = Column(project_type_enum, default='Personal')
-    
+    featured = Column(Boolean, default=False, nullable=False)
+
     # Dates
     start_date = Column(Date)
     end_date = Column(Date)
