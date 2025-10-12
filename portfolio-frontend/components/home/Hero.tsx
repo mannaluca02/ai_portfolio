@@ -5,6 +5,13 @@ interface HeroProps {
 }
 
 export default function Hero({ onChatClick }: HeroProps) {
+  const scrollToAbout = () => {
+    const aboutSection = document.getElementById('about')
+    if (aboutSection) {
+      aboutSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <section
       id="home"
@@ -26,7 +33,7 @@ export default function Hero({ onChatClick }: HeroProps) {
             <span className="block text-tekhelet mt-2">Luca Manna</span>
           </h1>
           <p className="text-xl md:text-2xl text-text-secondary-light dark:text-text-secondary-dark max-w-2xl leading-relaxed">
-            Full-Stack Developer & KI-Enthusiast
+            Data Scientist & Full-Stack Developer
           </p>
         </div>
 
@@ -74,7 +81,11 @@ export default function Hero({ onChatClick }: HeroProps) {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <button
+        onClick={scrollToAbout}
+        className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer hover:opacity-70 transition-opacity"
+        aria-label="Scroll to about section"
+      >
         <svg
           className="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark"
           fill="none"
@@ -86,7 +97,7 @@ export default function Hero({ onChatClick }: HeroProps) {
         >
           <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
         </svg>
-      </div>
+      </button>
     </section>
   )
 }
