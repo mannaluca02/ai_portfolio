@@ -17,6 +17,7 @@ interface Message {
     title: string
     link: string
     relevance: number
+    index?: number  // Backend index for proper [N] numbering
   }>
   responseTime?: number
   verified?: boolean
@@ -49,11 +50,70 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    // Auto-scroll to bottom when chatbot opens
+    if (isOpen) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+      }, 100)
+    }
+  }, [isOpen])
+
   useImperativeHandle(ref, () => ({
     open: () => {
       setIsOpen(true)
     }
   }))
+
+  // Helper function to extract referenced source indices from LLM response
+  const extractReferencedSources = (text: string, allSources: any[]): any[] => {
+    // Find all [N] references in the text
+    const references = text.match(/\[(\d+)\]/g) || []
+    const referencedIndices = new Set(
+      references.map(ref => parseInt(ref.replace(/\[|\]/g, '')))
+    )
+
+    // Return only the sources that were referenced
+    // Backend uses 1-indexed, but provides "index" field in each source
+    return allSources.filter((source: any) => {
+      // Use the backend's index field if available
+      const sourceIndex = source.index || (allSources.indexOf(source) + 1)
+      return referencedIndices.has(sourceIndex)
+    })
+  }
+
+  // Helper function to filter sources by table based on query keywords
+  const filterSourcesByQuery = (query: string, sources: any[]): any[] => {
+    const lowerQuery = query.toLowerCase()
+
+    // Work experience keywords
+    if (lowerQuery.match(/arbeit|firma|unternehmen|gearbeitet|beruf|job|position|stelle/)) {
+      return sources.filter(s => s.table === 'work_experiences')
+    }
+
+    // Education keywords
+    if (lowerQuery.match(/studium|ausbildung|universit|hochschule|bachelor|master|abschluss/)) {
+      return sources.filter(s => s.table === 'education')
+    }
+
+    // Skills keywords
+    if (lowerQuery.match(/skill|fähigkeit|können|technolog|programm|sprache|framework/)) {
+      return sources.filter(s => s.table === 'skills')
+    }
+
+    // Projects keywords
+    if (lowerQuery.match(/projekt|entwickelt|gebaut|erstellt|app|website|system/)) {
+      return sources.filter(s => s.table === 'projects')
+    }
+
+    // Certificates keywords
+    if (lowerQuery.match(/zertifikat|zertifizierung|kurs|certificate/)) {
+      return sources.filter(s => s.table === 'certificates')
+    }
+
+    // No specific keywords matched - return all
+    return sources
+  }
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
@@ -64,29 +124,150 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
       content: inputValue
     }
 
+    const userQuery = inputValue.trim()
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
 
-    // TODO: Replace with actual API call
-    setTimeout(() => {
-      const botMessage: Message = {
+    try {
+      const startTime = performance.now()
+
+      // Call the actual backend API
+      const response = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputValue,
+          mode: mode
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const endTime = performance.now()
+      const responseTime = ((endTime - startTime) / 1000).toFixed(1)
+
+      // Parse the response based on mode
+      let botMessage: Message
+
+      if (mode === 'listen') {
+        // Listen mode: just sources (ignore answer text from backend)
+        // Step 1: Filter by query keywords (table-aware)
+        let filteredSources = filterSourcesByQuery(userQuery, data.sources || [])
+
+        // Step 2: Filter by similarity threshold (45% for better quality)
+        filteredSources = filteredSources
+          .filter((source: any) => source.similarity >= 0.45)
+          .slice(0, 5)
+
+        // Step 3: Map to display format
+        const relevantSources = filteredSources.map((source: any) => ({
+          title: source.title,
+          link: `${source.section}-${source.slug}`,
+          relevance: Math.round(source.similarity * 100)
+        }))
+
+        // Check if we have meaningful results
+        const hasResults = relevantSources.length > 0
+
+        botMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: hasResults
+            ? `📌 ${relevantSources.length} relevante Informationen gefunden:`
+            : 'Dazu habe ich keine Informationen.',
+          sources: relevantSources,
+          responseTime: parseFloat(responseTime)
+        }
+      } else {
+        // Natural mode: LLM response with sources
+        const isVerified = data.verification?.is_verified
+        const confidence = data.verification?.confidence || data.confidence || 0
+        const hasRelevantAnswer = !data.answer?.toLowerCase().includes('keine informationen') &&
+                                   !data.answer?.toLowerCase().includes('nicht gefunden') &&
+                                   !data.answer?.toLowerCase().includes('entschuldigung')
+
+        // Check if query is about work experiences (needs special handling)
+        const isWorkQuery = userQuery.toLowerCase().match(/arbeit|firma|unternehmen|gearbeitet|beruf|job|position|stelle|wo.*gearbeitet/)
+
+        // Show sources if:
+        // 1. Answer is verified, OR
+        // 2. Confidence is above 55% (slightly below the 60% threshold to be more lenient), OR
+        // 3. Answer contains meaningful content and we have high-similarity sources, OR
+        // 4. It's a work query and we have work_experiences in sources
+        const hasHighQualitySources = data.sources?.some((s: any) => s.similarity >= 0.40) || false
+        const hasWorkExperiences = isWorkQuery && data.sources?.some((s: any) => s.table === 'work_experiences')
+        const shouldShowSources = ((isVerified || confidence >= 0.55 || hasHighQualitySources || hasWorkExperiences) && hasRelevantAnswer)
+
+        // Extract only the sources that are actually referenced in the answer text
+        let sourcesToShow: any[] = []
+        if (shouldShowSources && data.sources) {
+          // Lower threshold for work queries (30% instead of 35%)
+          const similarityThreshold = isWorkQuery ? 0.30 : 0.35
+          const filteredSources = data.sources.filter((source: any) => source.similarity >= similarityThreshold)
+
+          // If work query, show ALL work_experiences regardless of references
+          if (isWorkQuery) {
+            const workExperiences = filteredSources.filter((s: any) => s.table === 'work_experiences')
+            const otherReferences = extractReferencedSources(data.answer || '', filteredSources)
+              .filter((s: any) => s.table !== 'work_experiences')
+
+            // Combine: all work experiences + other referenced sources
+            sourcesToShow = [...workExperiences, ...otherReferences]
+
+            // Force show sources for work queries even if not initially verified
+            // Work queries should always show work experiences if they exist
+            if (workExperiences.length > 0 && sourcesToShow.length === 0) {
+              sourcesToShow = workExperiences
+            }
+          } else {
+            // Normal behavior: extract only referenced sources from the answer
+            const referencedSources = extractReferencedSources(data.answer || '', filteredSources)
+
+            // If we found referenced sources, use those. Otherwise fall back to top sources
+            sourcesToShow = referencedSources.length > 0
+              ? referencedSources
+              : filteredSources.slice(0, 5)
+          }
+        }
+
+        const relevantSources = sourcesToShow.map((source: any) => ({
+          title: source.title,
+          link: `${source.section}-${source.slug}`,
+          relevance: Math.round(source.similarity * 100),
+          index: source.index  // Preserve backend index for proper [N] numbering
+        }))
+
+        botMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.answer || 'Entschuldigung, ich konnte keine Antwort finden.',
+          sources: relevantSources,
+          responseTime: parseFloat(responseTime),
+          verified: isVerified || (confidence >= 0.55 && hasHighQualitySources) || (hasWorkExperiences && relevantSources.length > 0)
+        }
+      }
+
+      setMessages(prev => [...prev, botMessage])
+    } catch (error) {
+      console.error('Chatbot error:', error)
+
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: mode === 'listen'
-          ? '📌 3 relevante Informationen gefunden:'
-          : 'Ja, ich habe umfangreiche React-Erfahrung! [1] Von 2021 bis 2023 habe ich als Frontend Developer bei Firma X gearbeitet.',
-        sources: [
-          { title: 'Frontend Developer mit React', link: '#experience-firma-x', relevance: 95 },
-          { title: 'React + Next.js E-Commerce Projekt', link: '#projects-ecommerce', relevance: 87 },
-          { title: 'React Professional Certificate', link: '#certificates-react', relevance: 81 },
-        ],
-        responseTime: mode === 'listen' ? 0.3 : 2.9,
-        verified: mode === 'natural' ? true : undefined
+        content: '❌ Entschuldigung, es gab einen Fehler bei der Verarbeitung deiner Anfrage. Bitte versuche es später erneut.',
+        sources: []
       }
-      setMessages(prev => [...prev, botMessage])
+
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, mode === 'listen' ? 300 : 2900)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -230,11 +411,43 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                             key={index}
                             href={source.link}
                             className="block text-xs p-2 rounded bg-text-light/5 dark:bg-text-dark/5 hover:bg-text-light/10 dark:hover:bg-text-dark/10 transition-colors"
-                            onClick={() => setIsOpen(false)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setIsOpen(false)
+
+                              // Navigate to the section and item
+                              setTimeout(() => {
+                                const link = source.link.replace('#', '')
+
+                                // Check if it's a skills link (no accordion, just scroll to section)
+                                if (link.includes('skill')) {
+                                  const skillsSection = document.getElementById('skills')
+                                  if (skillsSection) {
+                                    skillsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                  }
+                                }
+                                // Check if it's a social link or contact info (scroll to contact section)
+                                else if (link.includes('social') || link.includes('contact')) {
+                                  const contactSection = document.getElementById('contact')
+                                  if (contactSection) {
+                                    contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                  }
+                                }
+                                // For other sections with accordions
+                                else {
+                                  window.location.hash = link
+
+                                  // Trigger a custom event for accordion opening
+                                  window.dispatchEvent(new CustomEvent('openAccordion', {
+                                    detail: { link }
+                                  }))
+                                }
+                              }, 300)
+                            }}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="font-medium">[{index + 1}] {source.title}</span>
-                              <span className="text-tekhelet dark:text-tekhelet opacity-75">{source.relevance}%</span>
+                              <span className="font-medium">[{source.index || index + 1}] {source.title}</span>
+                              <span className="text-tekhelet dark:text-cream opacity-90 font-semibold">{source.relevance}%</span>
                             </div>
                             <div className="flex items-center gap-1 mt-1 text-text-secondary-light dark:text-text-secondary-dark">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

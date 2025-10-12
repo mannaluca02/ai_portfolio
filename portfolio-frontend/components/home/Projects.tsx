@@ -20,6 +20,9 @@ interface Project {
   team_size?: number
   client_company?: string
   image_urls?: string[]
+  slug: string
+  section: string
+  anchor: string
 }
 
 type TabType = 'featured' | 'all'
@@ -49,6 +52,45 @@ export default function Projects() {
 
     fetchProjects()
   }, [])
+
+  // Handle accordion opening from chatbot links
+  useEffect(() => {
+    const handleOpenAccordion = (event: CustomEvent) => {
+      const link = event.detail.link
+
+      // Check if this link is for the projects section
+      if (link.includes('project')) {
+        // Find the project by matching the slug
+        const project = projects.find(proj => {
+          const fullSlug = `${proj.section}-${proj.slug}`
+          return link === fullSlug || link === proj.slug || link.endsWith(proj.slug)
+        })
+
+        if (project) {
+          // If the project is featured, switch to featured tab
+          // Otherwise switch to all tab
+          if (project.featured) {
+            setActiveTab('featured')
+          } else {
+            setActiveTab('all')
+          }
+
+          setExpandedId(project.id)
+
+          // Scroll to the section after a short delay
+          setTimeout(() => {
+            const element = document.getElementById('projects')
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          }, 100)
+        }
+      }
+    }
+
+    window.addEventListener('openAccordion', handleOpenAccordion as EventListener)
+    return () => window.removeEventListener('openAccordion', handleOpenAccordion as EventListener)
+  }, [projects])
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null

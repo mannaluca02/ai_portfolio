@@ -16,6 +16,9 @@ interface EducationRecord {
   description?: string
   achievements?: string[]
   institution_logo_url?: string
+  slug: string
+  section: string
+  anchor: string
 }
 
 export default function Education() {
@@ -42,6 +45,37 @@ export default function Education() {
 
     fetchEducation()
   }, [])
+
+  // Handle accordion opening from chatbot links
+  useEffect(() => {
+    const handleOpenAccordion = (event: CustomEvent) => {
+      const link = event.detail.link
+
+      // Check if this link is for the education section
+      if (link.includes('education')) {
+        // Find the education record by matching the slug
+        const educationRecord = education.find(edu => {
+          const fullSlug = `${edu.section}-${edu.slug}`
+          return link === fullSlug || link === edu.slug || link.endsWith(edu.slug)
+        })
+
+        if (educationRecord) {
+          setExpandedId(educationRecord.id)
+
+          // Scroll to the section after a short delay
+          setTimeout(() => {
+            const element = document.getElementById('education')
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          }, 100)
+        }
+      }
+    }
+
+    window.addEventListener('openAccordion', handleOpenAccordion as EventListener)
+    return () => window.removeEventListener('openAccordion', handleOpenAccordion as EventListener)
+  }, [education])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

@@ -15,6 +15,9 @@ interface WorkExperience {
   responsibilities: string[]
   technologies: string[]
   company_logo_url?: string
+  slug: string
+  section: string
+  anchor: string
 }
 
 export default function Experience() {
@@ -39,6 +42,38 @@ export default function Experience() {
 
     fetchExperiences()
   }, [])
+
+  // Handle accordion opening from chatbot links
+  useEffect(() => {
+    const handleOpenAccordion = (event: CustomEvent) => {
+      const link = event.detail.link
+
+      // Check if this link is for the experience section
+      // Link format: "experience-work-techvision-ag-2021" or "work_experiences-work-techvision-ag-2021"
+      if (link.includes('experience') || link.includes('work')) {
+        // Find the experience by matching the slug
+        const experience = experiences.find(exp => {
+          const fullSlug = `${exp.section}-${exp.slug}`
+          return link === fullSlug || link === exp.slug || link.endsWith(exp.slug)
+        })
+
+        if (experience) {
+          setExpandedId(experience.id)
+
+          // Scroll to the section after a short delay
+          setTimeout(() => {
+            const element = document.getElementById('experience')
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          }, 100)
+        }
+      }
+    }
+
+    window.addEventListener('openAccordion', handleOpenAccordion as EventListener)
+    return () => window.removeEventListener('openAccordion', handleOpenAccordion as EventListener)
+  }, [experiences])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

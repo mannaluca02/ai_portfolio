@@ -12,6 +12,9 @@ interface Certificate {
   credential_id?: string
   description?: string
   certificate_url?: string
+  slug: string
+  section: string
+  anchor: string
 }
 
 export default function Certificates() {
@@ -38,6 +41,37 @@ export default function Certificates() {
 
     fetchCertificates()
   }, [])
+
+  // Handle accordion opening from chatbot links
+  useEffect(() => {
+    const handleOpenAccordion = (event: CustomEvent) => {
+      const link = event.detail.link
+
+      // Check if this link is for the certificates section
+      if (link.includes('certificate')) {
+        // Find the certificate by matching the slug
+        const certificate = certificates.find(cert => {
+          const fullSlug = `${cert.section}-${cert.slug}`
+          return link === fullSlug || link === cert.slug || link.endsWith(cert.slug)
+        })
+
+        if (certificate) {
+          setExpandedId(certificate.id)
+
+          // Scroll to the section after a short delay
+          setTimeout(() => {
+            const element = document.getElementById('certificates')
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          }, 100)
+        }
+      }
+    }
+
+    window.addEventListener('openAccordion', handleOpenAccordion as EventListener)
+    return () => window.removeEventListener('openAccordion', handleOpenAccordion as EventListener)
+  }, [certificates])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
