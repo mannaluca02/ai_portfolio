@@ -373,7 +373,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-cream dark:bg-dark-bg-secondary">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-cream dark:bg-dark-bg-secondary" data-lenis-prevent>
               {/* Welcome Message */}
               {messages.length === 0 && (
                 <div className="bg-text-light/5 dark:bg-text-dark/5 rounded-lg p-4">

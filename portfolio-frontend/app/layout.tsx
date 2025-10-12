@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import SmoothScroll from '@/components/SmoothScroll'
 import { Providers } from './providers'
 
 const inter = Inter({
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="de" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
+          <SmoothScroll />
           <Navbar />
           <main>{children}</main>
           <Footer />

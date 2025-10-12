@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 
 const navigationLinks = [
   { href: '#home', label: 'Home' },
@@ -44,6 +43,19 @@ export default function Navbar() {
     setIsMobileMenuOpen(false)
   }
 
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault()
+    closeMobileMenu()
+
+    // Get the target section
+    const targetId = href.replace('#', '')
+    const targetSection = document.getElementById(targetId)
+
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <>
       {/* Fixed Header */}
@@ -57,24 +69,25 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <Link
+            <a
               href="#home"
               className="text-xl font-bold text-text-light dark:text-text-dark hover:text-tekhelet transition-colors relative z-50"
-              onClick={closeMobileMenu}
+              onClick={(e) => handleNavClick(e, '#home')}
             >
               LM
-            </Link>
+            </a>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
               {navigationLinks.map((link) => (
-                <Link
+                <a
                   key={link.href}
                   href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors"
                 >
                   {link.label}
-                </Link>
+                </a>
               ))}
             </nav>
 
@@ -121,12 +134,12 @@ export default function Navbar() {
               isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <nav className="flex flex-col items-center justify-start h-full gap-6 px-8 pt-24 pb-8 overflow-y-auto">
+            <nav className="flex flex-col items-center justify-start h-full gap-6 px-8 pt-24 pb-8 overflow-y-auto" data-lenis-prevent>
               {navigationLinks.map((link, index) => (
-                <Link
+                <a
                   key={link.href}
                   href={link.href}
-                  onClick={closeMobileMenu}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   className="text-2xl sm:text-3xl font-medium text-text-light dark:text-text-dark hover:text-tekhelet transition-colors"
                   style={{
                     animation: `fadeInUp 0.3s ease-out forwards ${index * 0.1}s`,
@@ -134,7 +147,7 @@ export default function Navbar() {
                   }}
                 >
                   {link.label}
-                </Link>
+                </a>
               ))}
             </nav>
           </div>
