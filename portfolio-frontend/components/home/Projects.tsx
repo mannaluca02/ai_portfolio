@@ -15,7 +15,7 @@ interface Project {
   project_url?: string
   github_url?: string
   demo_url?: string
-  technologies: string[]
+  technologies?: string[] | null
   your_role?: string
   team_size?: number
   client_company?: string
@@ -102,7 +102,9 @@ export default function Projects() {
     const colors: Record<string, string> = {
       'Personal': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
       'Professional': 'bg-green-500/10 text-green-600 dark:text-green-400',
+      'Academic': 'bg-green-500/10 text-green-600 dark:text-green-400',
       'Open Source': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+      'Startup': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
       'Client Work': 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
     }
     return colors[type] || 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
