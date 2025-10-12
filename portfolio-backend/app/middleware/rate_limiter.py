@@ -67,8 +67,13 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         """Process request with rate limiting"""
 
-        # Skip rate limiting for health check and docs
-        if request.url.path in ["/api/health", "/", "/docs", "/redoc", "/openapi.json"]:
+        # Skip rate limiting for health check, docs, and data endpoints (not chat)
+        skip_paths = [
+            "/api/health", "/", "/docs", "/redoc", "/openapi.json",
+            "/api/contact-info", "/api/social-links", "/api/work-experiences",
+            "/api/projects", "/api/skills", "/api/certificates", "/api/education"
+        ]
+        if request.url.path in skip_paths:
             return await call_next(request)
 
         # Get client IP
@@ -186,8 +191,13 @@ class PathBasedRateLimiter(RateLimiterMiddleware):
     async def dispatch(self, request: Request, call_next):
         """Process request with path-specific rate limiting"""
 
-        # Skip rate limiting for health check and docs
-        if request.url.path in ["/api/health", "/", "/docs", "/redoc", "/openapi.json"]:
+        # Skip rate limiting for health check, docs, and data endpoints (not chat)
+        skip_paths = [
+            "/api/health", "/", "/docs", "/redoc", "/openapi.json",
+            "/api/contact-info", "/api/social-links", "/api/work-experiences",
+            "/api/projects", "/api/skills", "/api/certificates", "/api/education"
+        ]
+        if request.url.path in skip_paths:
             return await call_next(request)
 
         # Get path-specific limits

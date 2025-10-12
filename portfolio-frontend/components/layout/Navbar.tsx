@@ -8,7 +8,9 @@ const navigationLinks = [
   { href: '#about', label: 'Über mich' },
   { href: '#experience', label: 'Erfahrung' },
   { href: '#projects', label: 'Projekte' },
+  { href: '#education', label: 'Ausbildung' },
   { href: '#skills', label: 'Skills' },
+  { href: '#certificates', label: 'Zertifikate' },
   { href: '#contact', label: 'Kontakt' },
 ]
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api import chat, health
+from app.api import chat, health, contact, social, work, project, skill, certificate, education
 from app.middleware.rate_limiter import PathBasedRateLimiter
 import logging
 
@@ -44,6 +44,13 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router)
 app.include_router(chat.router)
+app.include_router(contact.router)
+app.include_router(social.router)
+app.include_router(work.router)
+app.include_router(project.router)
+app.include_router(skill.router)
+app.include_router(certificate.router)
+app.include_router(education.router)
 
 
 @app.on_event("startup")
