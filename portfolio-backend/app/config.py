@@ -18,10 +18,14 @@ class Settings(BaseSettings):
     BGE_MODEL_PATH: str = "./app/ml_models/bge-m3"
     BGE_MODEL_NAME: str = "BAAI/bge-m3"
     
-    # Rate Limiting
-    RATE_LIMIT_NATURAL_MODE: int = 10
-    RATE_LIMIT_LISTEN_MODE: int = 40
-    RATE_LIMIT_PER_HOUR: int = 3
+    # Rate Limiting (centralized configuration)
+    # Natural Mode (LLM-powered chatbot)
+    RATE_LIMIT_NATURAL_DAILY: int = 20    # Max requests per day per IP
+    RATE_LIMIT_NATURAL_MONTHLY: int = 100  # Max requests per month per IP
+
+    # Listen Mode (search-only, no LLM)
+    RATE_LIMIT_LISTEN_DAILY: int = 40     # Max requests per day per IP
+    RATE_LIMIT_LISTEN_MONTHLY: int = 200   # Max requests per month per IP
     
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000"

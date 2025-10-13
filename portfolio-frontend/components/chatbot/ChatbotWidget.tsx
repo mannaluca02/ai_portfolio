@@ -26,7 +26,7 @@ interface Message {
 const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
   const [isOpen, setIsOpen] = useState(false)
   const [showFloatingButton, setShowFloatingButton] = useState(false)
-  const [mode, setMode] = useState<ChatMode>('listen')
+  const [mode, setMode] = useState<ChatMode>('natural')
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -322,7 +322,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
           >
             {/* Header */}
             <div className="bg-tekhelet text-cream p-4 flex-shrink-0">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   <h3 className="font-medium text-cream">Portfolio Chatbot</h3>
@@ -336,40 +336,6 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                   </svg>
                 </button>
               </div>
-
-              {/* Mode Selection */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setMode('listen')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    mode === 'listen'
-                      ? 'bg-cream text-tekhelet'
-                      : 'bg-tekhelet/30 text-cream/70 hover:bg-tekhelet/40'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Listen
-                  </div>
-                </button>
-                <button
-                  onClick={() => setMode('natural')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    mode === 'natural'
-                      ? 'bg-cream text-tekhelet'
-                      : 'bg-tekhelet/30 text-cream/70 hover:bg-tekhelet/40'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    Natural
-                  </div>
-                </button>
-              </div>
             </div>
 
             {/* Messages Area */}
@@ -381,8 +347,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                     👋 Hallo! Ich bin dein Portfolio-Assistent.
                   </p>
                   <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                    <strong>Listen-Modus:</strong> Schnelle Suche (40 Anfragen/Tag)<br />
-                    <strong>Natural-Modus:</strong> KI-Antworten (10 Anfragen/Tag)
+                    Stell mir Fragen über Lucas Berufserfahrung, Projekte, Ausbildung und Skills. Ich beantworte sie mit verifizierten Informationen aus dem Portfolio.
                   </p>
                 </div>
               )}

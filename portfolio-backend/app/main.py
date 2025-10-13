@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api import chat, health, contact, social, work, project, skill, certificate, education
-from app.middleware.rate_limiter import PathBasedRateLimiter
+from app.middleware.rate_limiter import DailyMonthlyRateLimiter
 import logging
 
 # Configure logging
@@ -33,11 +33,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rate Limiting Middleware (path-specific)
+# Rate Limiting Middleware (daily/monthly limits per mode)
 app.add_middleware(
-    PathBasedRateLimiter,
-    limits={
-        "/api/chat": (settings.RATE_LIMIT_NATURAL_MODE, 5),  # Natural mode: 10 req/min, burst 5
+    DailyMonthlyRateLimiter,
+    mode_limits={
+        'natural': {
+            'daily': settings.RATE_LIMIT_NATURAL_DAILY,
+            'monthly': settings.RATE_LIMIT_NATURAL_MONTHLY
+        },
+        'listen': {
+            'daily': settings.RATE_LIMIT_LISTEN_DAILY,
+            'monthly': settings.RATE_LIMIT_LISTEN_MONTHLY
+        }
     }
 )
 

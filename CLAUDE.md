@@ -126,10 +126,24 @@ psql -f portfolio-backend/database/supabase-script.sql
 
 ## Rate Limiting
 
-- **Natural Mode**: 10 requests per day per IP
-- **Listen Mode**: 40 requests per day per IP
-- **Token Limit**: Max 300 tokens per LLM response
-- Implementation: Path-based rate limiting in `app/middleware/rate_limiter.py`
+**Centralized Configuration** - All rate limits are configured in `app/config.py` and can be adjusted via environment variables.
+
+**Natural Mode** (LLM-powered responses):
+- 20 requests per day per IP
+- 100 requests per month per IP
+- ~2.8-3.2s response time
+- Token Limit: Max 300 tokens per LLM response
+
+**Listen Mode** (search-only, currently disabled in frontend):
+- 40 requests per day per IP
+- 200 requests per month per IP
+- ~0.3-0.4s response time
+
+**Implementation**:
+- Dual-period rate limiting (daily + monthly) in `app/middleware/rate_limiter.py`
+- Uses `DailyMonthlyRateLimiter` class with automatic counter resets
+- Rate limit headers included in API responses: `X-RateLimit-Daily-Remaining`, `X-RateLimit-Monthly-Remaining`
+- Tracks usage per IP address and per chat mode independently
 
 ## Key Technologies
 
@@ -147,9 +161,13 @@ Backend configuration is managed via `app/config.py` using Pydantic settings. Ke
 - `DATABASE_URL`: PostgreSQL connection string
 - `OPENAI_API_KEY`: OpenAI API key
 - `BGE_MODEL_PATH`: Path to bge-m3 model (default: `./app/ml_models/bge-m3`)
-- `RATE_LIMIT_NATURAL_MODE`: Rate limit for natural mode (default: 10)
-- `RATE_LIMIT_LISTEN_MODE`: Rate limit for listen mode (default: 40)
+- `RATE_LIMIT_NATURAL_DAILY`: Daily limit for natural mode (default: 20)
+- `RATE_LIMIT_NATURAL_MONTHLY`: Monthly limit for natural mode (default: 100)
+- `RATE_LIMIT_LISTEN_DAILY`: Daily limit for listen mode (default: 40)
+- `RATE_LIMIT_LISTEN_MONTHLY`: Monthly limit for listen mode (default: 200)
 - `CORS_ORIGINS`: Comma-separated allowed origins
+
+**Note**: Rate limits are enforced per IP address and tracked separately for each chat mode. Both daily and monthly limits must be satisfied for a request to succeed.
 
 ## Anti-Hallucination Strategy
 
