@@ -101,14 +101,76 @@ CREATE EXTENSION IF NOT EXISTS vector;
 python scripts/generate_embeddings.py
 ```
 
-## Running the Application
+## Backend Starten - Schnellanleitung
+
+### Methode 1: Mit Start-Skript (Empfohlen)
+
+Das ist die einfachste Methode:
 
 ```bash
-# Development mode
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd portfolio-backend
+./start.sh
+```
 
-# Production mode
+Das Skript erledigt automatisch:
+- ✓ Überprüfung des Virtual Environments
+- ✓ Aktivierung des Virtual Environments
+- ✓ Überprüfung der .env Datei
+- ✓ Port-Verfügbarkeit prüfen
+- ✓ Server starten
+
+### Methode 2: Manuell
+
+#### Voraussetzung
+Das Virtual Environment und alle Dependencies müssen installiert sein (siehe Setup oben).
+
+#### Schritt 1: Terminal öffnen
+Navigiere zum Backend-Verzeichnis:
+```bash
+cd portfolio-backend
+```
+
+#### Schritt 2: Virtual Environment aktivieren
+```bash
+source venv/bin/activate
+```
+
+**Wichtig**: Du erkennst, dass das Virtual Environment aktiv ist, wenn `(venv)` vor deinem Terminal-Prompt erscheint.
+
+#### Schritt 3: Server starten
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Fertig!
+Das Backend ist jetzt verfügbar unter:
+- API: `http://localhost:8000`
+- Dokumentation: `http://localhost:8000/docs`
+- Health Check: `http://localhost:8000/api/health`
+
+### Server stoppen
+Drücke `CTRL+C` im Terminal, um den Server zu stoppen.
+
+---
+
+## Running the Application (Detailed)
+
+### Development Mode
+```bash
+# Mit aktiviertem venv
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Production Mode
+```bash
+# Mit aktiviertem venv
 uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+### Alternative: Ohne Virtual Environment zu aktivieren
+```bash
+# Startet direkt mit dem venv Python
+./venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 API will be available at `http://localhost:8000`
