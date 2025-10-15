@@ -33,12 +33,11 @@ CREATE TYPE project_type AS ENUM (
     'Startup'
 );
 
--- Skill Level
+-- Skill Level (3 levels only)
 CREATE TYPE skill_level AS ENUM (
-    'Beginner',
-    'Intermediate',
-    'Advanced',
-    'Expert'
+    'Beginner',    -- Grau - Grundkenntnisse
+    'Intermediate', -- Grün - Solide Kenntnisse
+    'Expert'       -- Blau - Expertenwissen
 );
 
 -- Skill Category
@@ -574,25 +573,25 @@ INSERT INTO projects (
 INSERT INTO skills (name, skill_level, category, years_of_experience, description, slug, anchor) VALUES
 -- Backend
 ('Python', 'Expert', 'Backend', 8.0, 'Hauptprogrammiersprache für Backend-Entwicklung', 'skill-python', 'python'),
-('FastAPI', 'Advanced', 'Backend', 3.5, 'Moderne API-Entwicklung mit FastAPI', 'skill-fastapi', 'fastapi'),
-('Django', 'Advanced', 'Backend', 5.0, 'Full-Stack Web Framework', 'skill-django', 'django'),
+('FastAPI', 'Expert', 'Backend', 3.5, 'Moderne API-Entwicklung mit FastAPI', 'skill-fastapi', 'fastapi'),
+('Django', 'Expert', 'Backend', 5.0, 'Full-Stack Web Framework', 'skill-django', 'django'),
 ('Node.js', 'Intermediate', 'Backend', 3.0, 'JavaScript Backend-Entwicklung', 'skill-nodejs', 'nodejs'),
 
 -- Frontend
-('React', 'Advanced', 'Frontend', 6.0, 'Component-based UI Development', 'skill-react', 'react'),
-('Next.js', 'Advanced', 'Frontend', 3.0, 'React Framework mit SSR', 'skill-nextjs', 'nextjs'),
-('TypeScript', 'Advanced', 'Frontend', 4.0, 'Type-safe JavaScript', 'skill-typescript', 'typescript'),
-('Tailwind CSS', 'Advanced', 'Frontend', 2.5, 'Utility-first CSS Framework', 'skill-tailwind', 'tailwind'),
+('React', 'Expert', 'Frontend', 6.0, 'Component-based UI Development', 'skill-react', 'react'),
+('Next.js', 'Expert', 'Frontend', 3.0, 'React Framework mit SSR', 'skill-nextjs', 'nextjs'),
+('TypeScript', 'Expert', 'Frontend', 4.0, 'Type-safe JavaScript', 'skill-typescript', 'typescript'),
+('Tailwind CSS', 'Expert', 'Frontend', 2.5, 'Utility-first CSS Framework', 'skill-tailwind', 'tailwind'),
 
 -- Database
-('PostgreSQL', 'Advanced', 'Database', 7.0, 'Relationale Datenbanken und pgvector', 'skill-postgresql', 'postgresql'),
+('PostgreSQL', 'Expert', 'Database', 7.0, 'Relationale Datenbanken und pgvector', 'skill-postgresql', 'postgresql'),
 ('Redis', 'Intermediate', 'Database', 4.0, 'Caching und Session Management', 'skill-redis', 'redis'),
 ('MongoDB', 'Intermediate', 'Database', 2.0, 'NoSQL Datenbanken', 'skill-mongodb', 'mongodb'),
 
 -- DevOps
-('Docker', 'Advanced', 'DevOps', 5.0, 'Containerization und Orchestrierung', 'skill-docker', 'docker'),
+('Docker', 'Expert', 'DevOps', 5.0, 'Containerization und Orchestrierung', 'skill-docker', 'docker'),
 ('Kubernetes', 'Intermediate', 'DevOps', 2.0, 'Container Orchestrierung', 'skill-kubernetes', 'kubernetes'),
-('GitLab CI', 'Advanced', 'DevOps', 4.0, 'CI/CD Pipelines', 'skill-gitlab-ci', 'gitlab-ci'),
+('GitLab CI', 'Expert', 'DevOps', 4.0, 'CI/CD Pipelines', 'skill-gitlab-ci', 'gitlab-ci'),
 
 -- Cloud
 ('AWS', 'Intermediate', 'Cloud', 3.5, 'EC2, S3, Lambda, RDS', 'skill-aws', 'aws'),
@@ -601,7 +600,7 @@ INSERT INTO skills (name, skill_level, category, years_of_experience, descriptio
 ('Git', 'Expert', 'Tools', 8.0, 'Version Control', 'skill-git', 'git'),
 
 -- Soft Skills
-('Agile Development', 'Advanced', 'Soft Skills', 6.0, 'Scrum und Kanban', 'skill-agile', 'agile'),
+('Agile Development', 'Expert', 'Soft Skills', 6.0, 'Scrum und Kanban', 'skill-agile', 'agile'),
 ('Team Leadership', 'Intermediate', 'Soft Skills', 2.0, 'Führung von Entwicklerteams', 'skill-leadership', 'leadership');
 
 -- -----------------------------------------------------

@@ -70,7 +70,7 @@ class ChatbotService:
 
     def _retrieve_documents(self, message: str, mode: ChatMode) -> List:
         """
-        Retrieve relevant documents from database
+        Retrieve relevant documents from database with intent-based routing
 
         Args:
             message: User's question
@@ -79,20 +79,71 @@ class ChatbotService:
         Returns:
             List of search results
         """
-        # Use lower threshold in listen mode for more results
-        threshold = 0.3 if mode == ChatMode.LISTEN else 0.3
-        limit = 10 if mode == ChatMode.NATURAL else 5
+        # Natural mode: More focused results with higher quality threshold
+        # Listen mode: Cast wider net with lower threshold
+        # Balanced threshold: Not too high (misses results) or too low (includes noise)
+        threshold = 0.3 if mode == ChatMode.LISTEN else 0.35
+
+        # Limit results to avoid overwhelming LLM with too many sources
+        # Natural mode: 8 high-quality sources for accurate citations
+        # Listen mode: 5 sources for quick response
+        limit = 8 if mode == ChatMode.NATURAL else 5
 
         logger.info(f"Retrieving documents (threshold={threshold}, limit={limit})...")
 
+        # Retriever automatically detects intent and applies:
+        # - Table filtering based on query intent
+        # - Boost factors for relevant tables
+        # - MMR diversification to reduce redundancy
         search_results = self.retriever.search(
             query=message,
             limit=limit,
-            similarity_threshold=threshold
+            similarity_threshold=threshold,
+            use_mmr=True  # Enable MMR for diverse, non-redundant results
         )
 
-        logger.info(f"Retrieved {len(search_results)} documents")
+        # Apply quality filter to remove outliers with poor scores
+        if search_results and mode == ChatMode.NATURAL:
+            search_results = self._filter_by_quality(search_results)
+
+        logger.info(f"Retrieved {len(search_results)} documents after quality filtering")
         return search_results
+
+    def _filter_by_quality(self, results: List, max_gap: float = 0.25) -> List:
+        """
+        Filter results to remove low-quality outliers
+
+        Removes results that are:
+        1. More than max_gap (25%) below the top result
+        2. Creating a large quality gap from previous result
+
+        Args:
+            results: Sorted list of search results (best first)
+            max_gap: Maximum allowed similarity gap from top result
+
+        Returns:
+            Filtered list of high-quality results
+        """
+        if not results or len(results) <= 1:
+            return results
+
+        top_score = results[0].similarity
+        filtered = [results[0]]  # Always keep the top result
+
+        for i, result in enumerate(results[1:], 1):
+            # Calculate gap from top result
+            gap_from_top = top_score - result.similarity
+
+            # Reject if too far below top result
+            if gap_from_top > max_gap:
+                logger.info(f"Filtering out result {i+1}/{len(results)}: {result.title} "
+                          f"(similarity: {result.similarity:.2%}, gap from top: {gap_from_top:.2%})")
+                continue
+
+            filtered.append(result)
+
+        logger.info(f"Quality filter: kept {len(filtered)}/{len(results)} results")
+        return filtered
 
     def _create_listen_response(self, search_results: List) -> ChatResponse:
         """

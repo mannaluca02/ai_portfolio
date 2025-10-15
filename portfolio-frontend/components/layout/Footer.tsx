@@ -178,9 +178,31 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-          <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
-            <p>&copy; {currentYear} {contactInfo?.full_name || 'Portfolio'}. Alle Rechte vorbehalten.</p>
+        <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+            {/* Copyright */}
+            <div className="text-center md:text-left">
+              <p>&copy; {currentYear} {contactInfo?.full_name || 'Portfolio'}. Alle Rechte vorbehalten.</p>
+            </div>
+
+            {/* Legal Links */}
+            <div className="flex items-center gap-4">
+              <Link
+                href="/impressum"
+                className="hover:text-tekhelet transition-colors"
+              >
+                Impressum
+              </Link>
+              <span className="text-gray-400">•</span>
+              <Link
+                href="/datenschutz"
+                className="hover:text-tekhelet transition-colors"
+              >
+                Datenschutz
+              </Link>
+            </div>
           </div>
+        </div>
       </div>
     </footer>
   )
