@@ -19,13 +19,15 @@ class GeneratorService:
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = "gpt-3.5-turbo"
 
-    def generate_response(self, query: str, search_results: List[SearchResult]) -> Dict[str, Any]:
+    def generate_response(self, query: str, search_results: List[SearchResult],
+                         max_context_sources: int = 8) -> Dict[str, Any]:
         """
         Generate a natural language response based on search results
 
         Args:
             query: User's question
             search_results: List of relevant documents from retriever
+            max_context_sources: Maximum number of sources to include in LLM context (default: 8)
 
         Returns:
             Dict containing response, sources, and metadata
@@ -40,8 +42,14 @@ class GeneratorService:
                     "confidence": 0.0
                 }
 
-            # Build context from search results
-            context = self._build_context(search_results)
+            # Limit context to top N most relevant sources
+            # Too many sources confuse the LLM and cause incorrect citation numbers
+            context_sources = search_results[:max_context_sources]
+
+            logger.info(f"Using top {len(context_sources)} of {len(search_results)} sources for LLM context")
+
+            # Build context from limited search results
+            context = self._build_context(context_sources)
 
             # Build system prompt
             system_prompt = self._build_system_prompt()
@@ -58,8 +66,8 @@ class GeneratorService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7,
-                max_tokens=500,
+                temperature=0.3,  # Lower for factual, precise responses
+                max_tokens=700,   # More room for detailed answers
                 top_p=0.9,
                 frequency_penalty=0.0,
                 presence_penalty=0.0
@@ -68,11 +76,11 @@ class GeneratorService:
             # Extract answer
             answer = response.choices[0].message.content.strip()
 
-            # Extract sources with metadata
-            sources = self._extract_sources(search_results)
+            # Extract sources with metadata (only from context sources used)
+            sources = self._extract_sources(context_sources)
 
-            # Calculate confidence (average similarity score)
-            confidence = sum(r.similarity for r in search_results) / len(search_results)
+            # Calculate confidence (average similarity score of context sources)
+            confidence = sum(r.similarity for r in context_sources) / len(context_sources)
 
             logger.info(f"✅ Response generated (confidence: {confidence:.2f})")
 
@@ -91,25 +99,34 @@ class GeneratorService:
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the LLM"""
-        return """Du bist ein hilfreicher Assistent, der Fragen über Luca Manna's Portfolio beantwortet.
+        return """Du bist ein präziser Assistent für ein Portfolio-Profil.
 
-WICHTIGE REGELN:
-1. Beantworte Fragen basierend NUR auf den bereitgestellten Kontext-Dokumenten
-2. Verwende IMMER Quellenzitate im Format [1], [2], [3] etc.
-3. Wenn die Information nicht im Kontext ist, sage das ehrlich
-4. Antworte auf Deutsch in einem professionellen aber freundlichen Ton
-5. Sei präzise und konkret - keine vagen Aussagen
-6. Vermeide Wiederholungen
+KRITISCHE REGELN FÜR QUELLENZITATE:
+1. JEDE Aussage MUSS mit einer Quellenangabe enden: [1], [2], [3] etc.
+2. Verwende NUR Quellennummern die im KONTEXT-DOKUMENTE Bereich aufgelistet sind
+3. Zitiere in der EXAKTEN Reihenfolge wie die Quellen nummeriert sind
+4. Format: "Hat Erfahrung mit Python [1] und arbeitete mit React [2]."
+5. Mehrere Quellen für einen Fakt: [1][2] wenn beide denselben Punkt bestätigen
 
-QUELLENZITATE:
-- Jede Aussage MUSS mit einer Quelle belegt werden
-- Format: "Luca hat Erfahrung mit Python [1] und React [2]."
-- Mehrere Quellen: [1][2] wenn beide dieselbe Info bestätigen
+INFORMATIONSQUELLE:
+- Nutze AUSSCHLIESSLICH die bereitgestellten Kontext-Dokumente
+- Wenn keine passende Quelle existiert: "Dazu finde ich keine Information in meinen Daten."
+- NIEMALS eigenes Wissen oder Vermutungen hinzufügen
+- NIEMALS Quellennummern erfinden die nicht im Kontext existieren
 
-ANTWORTSTRUKTUR:
+ANTWORTFORMAT:
 - Beginne direkt mit der Antwort (keine Floskeln wie "Basierend auf...")
-- Strukturiere längere Antworten mit Absätzen
-- Verwende Aufzählungen für Listen von Skills/Projekten"""
+- Kurze, präzise Sätze - jeder Satz endet mit [N]
+- Bei mehreren Punkten: Bulletpoints verwenden:
+  • Erster Punkt mit Quelle [1]
+  • Zweiter Punkt mit Quelle [2]
+- Professioneller aber freundlicher Ton auf Deutsch
+
+VERBOTEN:
+- Aussagen ohne Quellenangabe [N]
+- Vage Formulierungen ohne Beleg
+- Wiederholungen derselben Information
+- Quellennummern die nicht im Kontext-Bereich stehen"""
 
     def _build_context(self, search_results: List[SearchResult]) -> str:
         """Build context string from search results"""
