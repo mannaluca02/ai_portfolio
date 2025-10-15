@@ -177,10 +177,6 @@ export default function Skills() {
                   <span className="text-text-secondary-light dark:text-text-secondary-dark">Expert</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span className="text-text-secondary-light dark:text-text-secondary-dark">Advanced</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-yellow-500 rounded"></div>
                   <span className="text-text-secondary-light dark:text-text-secondary-dark">Intermediate</span>
                 </div>
