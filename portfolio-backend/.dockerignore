@@ -15,7 +15,7 @@ huggingface/
 .cache/
 .tmp/
 
-# Node/Repo-Kram
+# Node & Repo-Kram
 node_modules/
 .git/
 .github/
