@@ -1,10 +1,10 @@
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
 
-[phases.build]
-# Falls der Download im Build zu lange dauert/fehlschlägt, ersetze diese Zeile
-# später durch nichts und führe den Download in [start] aus.
-cmds = ["python scripts/download_model.py"]
+# Keine build-cmds, damit nichts Grosses ins Image kommt
+# [phases.build]
+# cmds = []
 
 [start]
-cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+# Lade das Modell nur, wenn es noch nicht existiert, DANN starte uvicorn
+cmd = "if [ ! -d \"$BGE_MODEL_PATH\" ] || [ -z \"$(ls -A \"$BGE_MODEL_PATH\" 2>/dev/null)\" ]; then python scripts/download_model.py; fi && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
