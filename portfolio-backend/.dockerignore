@@ -1,0 +1,21 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Modelle / grosse Dateien
+app/ml_models/*
+*.pt
+*.bin
+*.safetensors
+huggingface/
+.cache/
+.tmp/
+
+# Node/Repo-Kram
+node_modules/
+.git/
+.github/
