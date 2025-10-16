@@ -2,7 +2,8 @@
 cmds = ["pip install -r requirements.txt"]
 
 [phases.build]
-# Wenn der Download im Build zu lange dauert, kannst du das auf die Startphase verschieben.
+# Falls der Download im Build zu lange dauert/fehlschlägt, ersetze diese Zeile
+# später durch nichts und führe den Download in [start] aus.
 cmds = ["python scripts/download_model.py"]
 
 [start]
