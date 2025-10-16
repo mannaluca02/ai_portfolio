@@ -1,14 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api import chat, health, contact, social, work, project, skill, certificate, education
+from app.api import (
+    chat,
+    health,
+    contact,
+    social,
+    work,
+    project,
+    skill,
+    certificate,
+    education,
+)
 from app.middleware.rate_limiter import DailyMonthlyRateLimiter
 import logging
 
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -21,7 +31,7 @@ app = FastAPI(
     debug=settings.DEBUG,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
 )
 
 # CORS Middleware
@@ -37,15 +47,15 @@ app.add_middleware(
 app.add_middleware(
     DailyMonthlyRateLimiter,
     mode_limits={
-        'natural': {
-            'daily': settings.RATE_LIMIT_NATURAL_DAILY,
-            'monthly': settings.RATE_LIMIT_NATURAL_MONTHLY
+        "natural": {
+            "daily": settings.RATE_LIMIT_NATURAL_DAILY,
+            "monthly": settings.RATE_LIMIT_NATURAL_MONTHLY,
         },
-        'listen': {
-            'daily': settings.RATE_LIMIT_LISTEN_DAILY,
-            'monthly': settings.RATE_LIMIT_LISTEN_MONTHLY
-        }
-    }
+        "listen": {
+            "daily": settings.RATE_LIMIT_LISTEN_DAILY,
+            "monthly": settings.RATE_LIMIT_LISTEN_MONTHLY,
+        },
+    },
 )
 
 # Include routers
@@ -75,10 +85,13 @@ async def shutdown_event():
 
 
 if __name__ == "__main__":
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
     import uvicorn
+
     uvicorn.run(
-        "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG
+        "app.main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG
     )
