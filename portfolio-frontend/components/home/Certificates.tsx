@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import FadeInSection from '@/components/ui/FadeInSection'
 
 interface Certificate {
@@ -22,6 +22,9 @@ export default function Certificates() {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [viewingCertificate, setViewingCertificate] = useState<Certificate | null>(null)
+  const mobileModalRef = useRef<HTMLDivElement>(null)
+  const [touchStart, setTouchStart] = useState<number>(0)
+  const [touchEnd, setTouchEnd] = useState<number>(0)
 
   useEffect(() => {
     const fetchCertificates = async () => {
@@ -42,6 +45,34 @@ export default function Certificates() {
 
     fetchCertificates()
   }, [])
+
+  // ESC key handler to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && viewingCertificate) {
+        setViewingCertificate(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [viewingCertificate])
+
+  // Handle swipe down to close mobile panel
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientY)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.touches[0].clientY)
+  }
+
+  const handleTouchEnd = () => {
+    // Swipe down detected (at least 100px)
+    if (touchStart - touchEnd < -100) {
+      setViewingCertificate(null)
+    }
+  }
 
   // Handle accordion opening from chatbot links
   useEffect(() => {
@@ -310,10 +341,7 @@ export default function Certificates() {
 
                 {/* Footer */}
                 <div className="px-8 py-4 border-t border-gray-200 dark:border-gray-800">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                      Klicken zum Vergrößern
-                    </span>
+                  <div className="flex justify-end items-center">
                     <a
                       href={viewingCertificate.certificate_url}
                       target="_blank"
@@ -334,11 +362,15 @@ export default function Certificates() {
           {/* Mobile Slide-Up Panel */}
           <div className="md:hidden fixed inset-x-0 bottom-0 z-50 pointer-events-none">
             <div
+              ref={mobileModalRef}
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               className="bg-cream dark:bg-dark-bg rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden pointer-events-auto animate-in slide-in-from-bottom duration-300"
             >
-              {/* Handle Bar */}
-              <div className="flex justify-center pt-3 pb-2">
+              {/* Handle Bar - Draggable */}
+              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
                 <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
               </div>
 
@@ -370,7 +402,7 @@ export default function Certificates() {
                 </div>
 
                 {/* Certificate Image */}
-                <div className="flex-1 overflow-auto p-4">
+                <div className="flex-1 overflow-auto p-4" data-lenis-prevent>
                   {viewingCertificate.certificate_url?.toLowerCase().endsWith('.pdf') ? (
                     // PDF Viewer - embedded without toolbar
                     <iframe
