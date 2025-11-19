@@ -198,29 +198,50 @@ class ChatbotService:
             search_results
         )
 
-        # Convert sources
-        sources = self._convert_sources_from_dict(generation_result["sources"])
+        # Check if LLM indicated no relevant information found
+        # If so, don't show sources (they are irrelevant/low quality)
+        answer = generation_result["answer"]
+        no_info_indicators = [
+            "keine information",
+            "keine relevanten informationen",
+            "nichts gefunden",
+            "dazu finde ich keine",
+            "kann ich keine information"
+        ]
+
+        has_no_info = any(indicator in answer.lower() for indicator in no_info_indicators)
+
+        # Convert sources only if relevant information was found
+        sources = [] if has_no_info else self._convert_sources_from_dict(generation_result["sources"])
 
         # Create verification result
-        verification = VerificationResult(
-            is_verified=verification_result.is_verified,
-            confidence=verification_result.confidence,
-            threshold=0.60
-        )
+        # If no info was found, set verification to None and confidence to 0
+        if has_no_info:
+            verification = None
+            confidence = 0.0
+            logger.info("No relevant information found - suppressing sources and verification")
+        else:
+            verification = VerificationResult(
+                is_verified=verification_result.is_verified,
+                confidence=verification_result.confidence,
+                threshold=0.30
+            )
+            confidence = generation_result["confidence"]
 
         # Build metadata
         metadata = {
             "model": generation_result.get("model"),
             "tokens_used": generation_result.get("tokens_used"),
             "results_count": len(search_results),
-            "verification_sentences": len(verification_result.details) if verification_result.details else 0
+            "verification_sentences": len(verification_result.details) if verification_result.details else 0,
+            "no_info_detected": has_no_info
         }
 
         return ChatResponse(
             answer=generation_result["answer"],
             sources=sources,
             mode=ChatMode.NATURAL,
-            confidence=generation_result["confidence"],
+            confidence=confidence,
             verification=verification,
             metadata=metadata
         )

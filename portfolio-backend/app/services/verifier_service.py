@@ -33,7 +33,7 @@ class VerifierService:
     def __init__(self):
         """Initialize verifier service"""
         self.embedding_service = get_embedding_service()
-        self.verification_threshold = 0.60  # Minimum similarity for verification
+        self.verification_threshold = 0.30  # Minimum similarity for verification
 
     def verify_response(self, response: str, sources: List[SearchResult]) -> VerificationResult:
         """
