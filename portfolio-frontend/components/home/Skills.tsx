@@ -50,7 +50,6 @@ export default function Skills() {
   const getSkillLevelColor = (level: string) => {
     const colors: Record<string, string> = {
       'Expert': 'bg-green-500',
-      'Advanced': 'bg-blue-500',
       'Intermediate': 'bg-yellow-500',
       'Beginner': 'bg-gray-400',
     }
@@ -60,7 +59,6 @@ export default function Skills() {
   const getSkillLevelWidth = (level: string) => {
     const widths: Record<string, string> = {
       'Expert': 'w-full',
-      'Advanced': 'w-4/5',
       'Intermediate': 'w-3/5',
       'Beginner': 'w-2/5',
     }

@@ -62,7 +62,7 @@ export default function DatenschutzPage() {
                 E-Mail:{' '}
                 <a
                   href="mailto:mannaluca02@gmail.com"
-                  className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                  className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
                 >
                   mannaluca02@gmail.com
                 </a>
@@ -91,7 +91,7 @@ export default function DatenschutzPage() {
                     href="https://vercel.com/legal/privacy-policy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                    className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
                   >
                     Vercel Privacy Policy
                   </a>
@@ -113,7 +113,7 @@ export default function DatenschutzPage() {
                     href="https://supabase.com/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                    className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
                   >
                     Supabase Privacy Policy
                   </a>
@@ -185,7 +185,7 @@ export default function DatenschutzPage() {
                     href="https://openai.com/policies/privacy-policy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                    className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
                   >
                     OpenAI Privacy Policy
                   </a>
@@ -372,7 +372,7 @@ export default function DatenschutzPage() {
                 Zur Ausübung dieser Rechte kontaktieren Sie mich bitte unter:{' '}
                 <a
                   href="mailto:mannaluca02@gmail.com"
-                  className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors font-medium"
+                  className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors font-medium"
                 >
                   mannaluca02@gmail.com
                 </a>
@@ -417,14 +417,14 @@ export default function DatenschutzPage() {
           <div className="flex flex-wrap gap-4 justify-center text-sm">
             <Link
               href="/"
-              className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+              className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
             >
               Startseite
             </Link>
             <span className="text-gray-400">•</span>
             <Link
               href="/impressum"
-              className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+              className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
             >
               Impressum
             </Link>

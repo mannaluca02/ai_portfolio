@@ -23,7 +23,7 @@ const config: Config = {
         'text-secondary-dark': '#A0A0A0',
 
         // Accent color
-        'tekhelet': '#3D348B',
+        'tekhelet': '#3f349e',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],

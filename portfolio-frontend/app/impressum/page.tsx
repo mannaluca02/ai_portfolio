@@ -55,7 +55,7 @@ export default function ImpressumPage() {
                 <p className="font-medium text-text-light dark:text-text-dark">E-Mail:</p>
                 <a
                   href="mailto:mannaluca02@gmail.com"
-                  className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                  className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
                 >
                   mannaluca02@gmail.com
                 </a>
@@ -123,7 +123,7 @@ export default function ImpressumPage() {
               Weitere Informationen zur Datenverarbeitung finden Sie in der{' '}
               <Link
                 href="/datenschutz"
-                className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors font-medium"
+                className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors font-medium"
               >
                 Datenschutzerklärung
               </Link>.
@@ -136,14 +136,14 @@ export default function ImpressumPage() {
           <div className="flex flex-wrap gap-4 justify-center text-sm">
             <Link
               href="/"
-              className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+              className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
             >
               Startseite
             </Link>
             <span className="text-gray-400">•</span>
             <Link
               href="/datenschutz"
-              className="text-tekhelet hover:text-tekhelet/80 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+              className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
             >
               Datenschutzerklärung
             </Link>
