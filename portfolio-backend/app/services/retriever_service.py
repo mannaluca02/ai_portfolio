@@ -440,6 +440,65 @@ class RetrieverService:
             embedding=embedding
         )
 
+    def get_fallback_results(self, table_name: str, limit: int = 3) -> List[SearchResult]:
+        """
+        Fallback retrieval without embedding filter.
+        Returns most recent/relevant entries when semantic search fails.
+
+        Args:
+            table_name: Name of table to query
+            limit: Maximum number of results
+
+        Returns:
+            List[SearchResult]: Results without similarity scores
+        """
+        try:
+            logger.info(f"Fallback retrieval from {table_name} (limit={limit})...")
+
+            # Map table names to formatters
+            formatters = {
+                'work_experiences': self._format_work_experience,
+                'projects': self._format_project,
+                'skills': self._format_skill,
+                'certificates': self._format_certificate,
+                'education': self._format_education,
+                'hobbies': self._format_hobby,
+                'contact_info': self._format_contact_info,
+                'social_links': self._format_social_link
+            }
+
+            if table_name not in formatters:
+                logger.warning(f"Unknown table for fallback: {table_name}")
+                return []
+
+            # Query without embedding filter, order by id DESC
+            # (newer entries typically have higher IDs)
+            query = text(f"""
+                SELECT *, 0.5 as similarity
+                FROM {table_name}
+                ORDER BY id DESC
+                LIMIT :limit
+            """)
+
+            result = self.db.execute(query, {"limit": limit})
+            rows = result.fetchall()
+
+            formatter = formatters[table_name]
+            search_results = []
+
+            for row in rows:
+                search_result = formatter(row, table_name)
+                # Override similarity to 0.5 (neutral/fallback indicator)
+                search_result.similarity = 0.5
+                search_results.append(search_result)
+
+            logger.info(f"Fallback retrieved {len(search_results)} results from {table_name}")
+            return search_results
+
+        except Exception as e:
+            logger.error(f"Fallback retrieval failed for {table_name}: {e}")
+            return []
+
     def _parse_embedding(self, embedding_str: str) -> Optional[np.ndarray]:
         """
         Parse embedding from database string format to numpy array

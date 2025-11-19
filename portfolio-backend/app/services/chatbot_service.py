@@ -79,17 +79,17 @@ class ChatbotService:
         Returns:
             List of search results
         """
-        # Natural mode: More focused results with higher quality threshold
-        # Listen mode: Cast wider net with lower threshold
-        # Balanced threshold: Not too high (misses results) or too low (includes noise)
-        threshold = 0.3 if mode == ChatMode.LISTEN else 0.35
+        # ADAPTIVE THRESHOLD: Adjust based on query length
+        # Short queries need lower thresholds to find results
+        base_threshold = 0.3 if mode == ChatMode.LISTEN else 0.35
+        threshold = self._get_adaptive_threshold(message, base_threshold)
 
         # Limit results to avoid overwhelming LLM with too many sources
         # Natural mode: 8 high-quality sources for accurate citations
         # Listen mode: 5 sources for quick response
         limit = 8 if mode == ChatMode.NATURAL else 5
 
-        logger.info(f"Retrieving documents (threshold={threshold}, limit={limit})...")
+        logger.info(f"Retrieving documents (adaptive_threshold={threshold}, limit={limit})...")
 
         # Retriever automatically detects intent and applies:
         # - Table filtering based on query intent
@@ -107,6 +107,12 @@ class ChatbotService:
             search_results = self._filter_by_quality(search_results)
 
         logger.info(f"Retrieved {len(search_results)} documents after quality filtering")
+
+        # FALLBACK: If no results found, try without embedding filter
+        if not search_results:
+            logger.warning(f"No results found with threshold {threshold}. Attempting fallback retrieval...")
+            search_results = self._fallback_retrieval(message, mode, limit)
+
         return search_results
 
     def _filter_by_quality(self, results: List, max_gap: float = 0.25) -> List:
@@ -144,6 +150,79 @@ class ChatbotService:
 
         logger.info(f"Quality filter: kept {len(filtered)}/{len(results)} results")
         return filtered
+
+    def _get_adaptive_threshold(self, query: str, base_threshold: float) -> float:
+        """
+        Calculate adaptive similarity threshold based on query length
+
+        Short/generic queries get lower thresholds to ensure results are found.
+        Longer/specific queries maintain higher thresholds for precision.
+
+        Args:
+            query: User's question
+            base_threshold: Base threshold for this mode
+
+        Returns:
+            float: Adjusted threshold (0.15 - base_threshold)
+        """
+        word_count = len(query.split())
+
+        if word_count <= 3:
+            # Very short queries: "Welche Projekte", "Wer ist Luca"
+            adjusted = 0.15
+            logger.info(f"Short query ({word_count} words): lowering threshold to {adjusted}")
+            return adjusted
+        elif word_count <= 6:
+            # Medium queries: lower threshold moderately
+            adjusted = max(0.20, base_threshold - 0.10)
+            logger.info(f"Medium query ({word_count} words): adjusting threshold to {adjusted}")
+            return adjusted
+        else:
+            # Long queries: use base threshold
+            logger.info(f"Long query ({word_count} words): using base threshold {base_threshold}")
+            return base_threshold
+
+    def _fallback_retrieval(self, message: str, mode: ChatMode, limit: int) -> List:
+        """
+        Fallback retrieval strategy when semantic search returns no results.
+        Fetches top N entries from each relevant table without embedding filter.
+
+        Args:
+            message: User's question
+            mode: Chat mode
+            limit: Number of results per table
+
+        Returns:
+            List of search results from database
+        """
+        logger.info("Executing fallback retrieval without embedding filter...")
+
+        # Detect intent to know which tables to query
+        from app.services.intent_service import get_intent_service
+        intent_service = get_intent_service()
+        intent = intent_service.detect_intent(message)
+
+        fallback_results = []
+
+        # Fetch recent/top entries from each intent table
+        for table_name in intent.tables[:3]:  # Limit to top 3 most relevant tables
+            try:
+                results = self.retriever.get_fallback_results(
+                    table_name=table_name,
+                    limit=min(3, limit)  # Max 3 per table
+                )
+                fallback_results.extend(results)
+                logger.info(f"Fallback: Retrieved {len(results)} results from {table_name}")
+            except Exception as e:
+                logger.warning(f"Fallback failed for table {table_name}: {e}")
+                continue
+
+        if fallback_results:
+            logger.info(f"✅ Fallback retrieval found {len(fallback_results)} total results")
+        else:
+            logger.warning("❌ Fallback retrieval found no results")
+
+        return fallback_results
 
     def _create_listen_response(self, search_results: List) -> ChatResponse:
         """
