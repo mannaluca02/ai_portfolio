@@ -336,7 +336,7 @@ PORT=8000
 
 ```env
 # Backend API URL
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
 # E-Mail (Resend)
 RESEND_API_KEY=re_...
