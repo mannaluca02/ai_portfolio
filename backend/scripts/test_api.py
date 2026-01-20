@@ -156,7 +156,7 @@ if __name__ == "__main__":
     logger.info("PORTFOLIO RAG CHATBOT API TESTS")
     logger.info("=" * 80)
     logger.info("Make sure the API server is running:")
-    logger.info("  cd portfolio-backend")
+    logger.info("  cd backend")
     logger.info("  source venv/bin/activate")
     logger.info("  uvicorn app.main:app --reload")
     logger.info("=" * 80 + "\n")

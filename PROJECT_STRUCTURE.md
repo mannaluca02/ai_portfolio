@@ -6,7 +6,7 @@ ai_portfolio/
 ├── .idea/                          # Projektdokumentation
 │   ├── TechnologieStac.md         # Technologie-Stack Dokumentation
 │   └── diagram.mmd                # Architektur-Diagramm
-├── portfolio-frontend/            # Next.js 14+ Frontend
+├── frontend/            # Next.js 14+ Frontend
 │   ├── src/
 │   │   ├── app/                   # App Router (Next.js 14+)
 │   │   │   ├── layout.tsx        # Root Layout
@@ -93,7 +93,7 @@ ai_portfolio/
 │   ├── package.json
 │   └── README.md
 │
-├── portfolio-backend/            # FastAPI Backend
+├── backend/            # FastAPI Backend
 │   ├── app/
 │   │   ├── main.py              # FastAPI Entry Point
 │   │   ├── config.py            # Configuration & Settings
@@ -191,14 +191,14 @@ ai_portfolio/
 
 ## Technologie-Details
 
-### Frontend (portfolio-frontend/)
+### Frontend (frontend/)
 - **Framework:** Next.js 14+ (App Router)
 - **UI:** React 18, TypeScript, Tailwind CSS
 - **State Management:** React Hooks, Context API
 - **API Client:** Axios / Fetch
 - **Deployment:** Vercel
 
-### Backend (portfolio-backend/)
+### Backend (backend/)
 - **Framework:** FastAPI (Python 3.11+)
 - **ORM:** SQLAlchemy
 - **Database:** PostgreSQL mit pgvector Extension
@@ -248,14 +248,14 @@ ai_portfolio/
 1. **Repository klonen**
 2. **Frontend Setup:**
    ```bash
-   cd portfolio-frontend
+   cd frontend
    npm install
    cp .env.example .env.local
    npm run dev
    ```
 3. **Backend Setup:**
    ```bash
-   cd portfolio-backend
+   cd backend
    python -m venv venv
    source venv/bin/activate  # Windows: venv\Scripts\activate
    pip install -r requirements.txt
@@ -272,13 +272,13 @@ ai_portfolio/
 
 ### Frontend (Vercel)
 1. GitHub Repository mit Vercel verbinden
-2. Root Directory: `portfolio-frontend`
+2. Root Directory: `frontend`
 3. Environment Variables konfigurieren
 4. Auto-Deploy bei Push zu main
 
 ### Backend (Railway)
 1. GitHub Repository mit Railway verbinden
-2. Root Directory: `portfolio-backend`
+2. Root Directory: `backend`
 3. Environment Variables konfigurieren
 4. Auto-Deploy bei Push zu main
 

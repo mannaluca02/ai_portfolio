@@ -19,7 +19,7 @@ This is a full-stack application with:
 
 ### Key Components
 
-**Backend** (`portfolio-backend/`):
+**Backend** (`backend/`):
 - **API Layer** (`app/api/`): REST endpoints for chatbot and health checks
 - **Services** (`app/services/`):
   - `embedding_service.py`: Generates embeddings using bge-m3 model
@@ -55,7 +55,7 @@ The chatbot supports two modes:
 
 ## Database
 
-**Critical**: Always reference `portfolio-backend/database/supabase-script.sql` to understand the database schema. This is the single source of truth for:
+**Critical**: Always reference `backend/database/supabase-script.sql` to understand the database schema. This is the single source of truth for:
 - Table structures
 - ENUMs (employment_type, project_type, skill_level, etc.)
 - Vector indices
@@ -69,7 +69,7 @@ The database uses PostgreSQL with pgvector extension for efficient similarity se
 
 ```bash
 # Navigate to backend directory
-cd portfolio-backend
+cd backend
 
 # Create and activate virtual environment
 python3 -m venv venv
@@ -94,7 +94,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 ### Testing
 
 ```bash
-# Test individual components (from portfolio-backend/)
+# Test individual components (from backend/)
 python scripts/test_connection.py          # Database connection
 python scripts/test_embedding_service.py   # Embedding generation
 python scripts/test_retriever_service.py   # Semantic search
@@ -110,7 +110,7 @@ python scripts/check_embeddings.py
 
 ```bash
 # Execute the complete database setup (in PostgreSQL)
-psql -f portfolio-backend/database/supabase-script.sql
+psql -f backend/database/supabase-script.sql
 
 # Or via Supabase SQL Editor:
 # Copy contents of supabase-script.sql and execute
@@ -185,8 +185,8 @@ Backend configuration is managed via `app/config.py` using Pydantic settings. Ke
 
 ## File Locations
 
-- Database schema: `portfolio-backend/database/supabase-script.sql`
+- Database schema: `backend/database/supabase-script.sql`
 - Technology documentation: `.idea/TechnologieStac.md`
 - Architecture diagram: `.idea/diagram.mmd`
 - Project structure: `PROJECT_STRUCTURE.md`
-- Backend README: `portfolio-backend/README.md`
+- Backend README: `backend/README.md`

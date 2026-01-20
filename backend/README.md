@@ -25,7 +25,7 @@ FastAPI backend for a portfolio website with an integrated RAG (Retrieval-Augmen
 ## Project Structure
 
 ```
-portfolio-backend/
+backend/
 ├── app/
 │   ├── api/              # API endpoints
 │   ├── database/         # Database connection & session
@@ -108,7 +108,7 @@ python scripts/generate_embeddings.py
 Das ist die einfachste Methode:
 
 ```bash
-cd portfolio-backend
+cd backend
 ./start.sh
 ```
 
@@ -127,7 +127,7 @@ Das Virtual Environment und alle Dependencies müssen installiert sein (siehe Se
 #### Schritt 1: Terminal öffnen
 Navigiere zum Backend-Verzeichnis:
 ```bash
-cd portfolio-backend
+cd backend
 ```
 
 #### Schritt 2: Virtual Environment aktivieren

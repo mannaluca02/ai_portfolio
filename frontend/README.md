@@ -40,7 +40,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Project Structure
 
 ```
-portfolio-frontend/
+frontend/
 ├── app/                    # Next.js 14 App Router
 │   ├── globals.css        # Global styles with Tailwind
 │   ├── layout.tsx         # Root layout with Header/Footer
@@ -93,7 +93,7 @@ All sections use the `FadeInSection` component for smooth fade-in animations as 
 
 ## Next Steps
 
-1. Connect to backend API (portfolio-backend)
+1. Connect to backend API (backend)
 2. Implement full chatbot functionality
 3. Add portfolio sections (Experience, Projects, Skills, etc.)
 4. Add contact form

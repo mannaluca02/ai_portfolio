@@ -211,7 +211,7 @@ __marimo__/
 # ============================================
 
 # ML Models (Large files - should NOT be in git)
-portfolio-backend/app/ml_models/
+backend/app/ml_models/
 *.bin
 *.pt
 *.pth
@@ -231,7 +231,7 @@ portfolio-backend/app/ml_models/
 .env
 .env.local
 .env.*.local
-portfolio-backend/.env
+backend/.env
 
 # Database files
 *.db

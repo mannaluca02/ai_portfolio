@@ -41,7 +41,7 @@ Der Chatbot nutzt Semantic Search und LLM-gestützte Antwortgenerierung, um prä
 
 ```
 ai_portfolio/
-├── portfolio-frontend/          # Next.js Frontend
+├── frontend/          # Next.js Frontend
 │   ├── app/                     # App Router (Next.js 14+)
 │   │   ├── api/                 # API Routes (Proxy zum Backend)
 │   │   │   ├── contact-info/
@@ -89,7 +89,7 @@ ai_portfolio/
 │   ├── tsconfig.json
 │   └── next.config.js
 │
-├── portfolio-backend/           # FastAPI Backend
+├── backend/           # FastAPI Backend
 │   ├── app/
 │   │   ├── api/                 # API Endpoints
 │   │   │   ├── chat.py          # Chatbot-Endpunkt
@@ -218,7 +218,7 @@ cd ai_portfolio
 
 ```bash
 # In das Backend-Verzeichnis wechseln
-cd portfolio-backend
+cd backend
 
 # Virtual Environment erstellen und aktivieren
 python3 -m venv venv
@@ -278,7 +278,7 @@ Das `start_local.sh` Script:
 
 ```bash
 # In das Frontend-Verzeichnis wechseln
-cd ../portfolio-frontend
+cd ../frontend
 
 # Dependencies installieren
 npm install
@@ -491,7 +491,7 @@ Vollständige API-Dokumentation: http://localhost:8000/docs
 ### Backend Tests
 
 ```bash
-cd portfolio-backend
+cd backend
 source venv/bin/activate
 
 # Datenbankverbindung testen
@@ -519,7 +519,7 @@ python scripts/check_embeddings.py
 ### Frontend Tests
 
 ```bash
-cd portfolio-frontend
+cd frontend
 
 # Linting
 npm run lint
@@ -544,7 +544,7 @@ npm run build
 
 1. Repository mit Vercel verbinden
 2. Framework: Next.js
-3. Root Directory: `portfolio-frontend`
+3. Root Directory: `frontend`
 4. Environment Variables setzen
 5. Deploy
 
