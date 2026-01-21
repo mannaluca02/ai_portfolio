@@ -2,6 +2,7 @@
 Project API Routes
 Endpoints for retrieving projects
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/api", tags=["projects"])
     response_model=List[ProjectResponse],
     status_code=status.HTTP_200_OK,
     summary="Get projects",
-    description="Retrieve all projects ordered by start date (newest first)"
+    description="Retrieve all projects ordered by start date (newest first)",
 )
 async def get_projects(db: Session = Depends(get_db)) -> List[ProjectResponse]:
     """
@@ -58,9 +59,15 @@ async def get_projects(db: Session = Depends(get_db)) -> List[ProjectResponse]:
     """
     try:
         # Get all projects ordered by start_date DESC (newest first), with nulls last
-        projects = db.query(Project).order_by(
-            Project.start_date.desc().nullslast()
-        ).all()
+        projects = (
+            db.query(Project)
+            .order_by(
+                Project.featured.desc(),  # Featured zuerst
+                Project.display_order.asc(),  # Dann nach display_order
+                Project.start_date.desc().nullslast(),  # Fallback: neueste zuerst
+            )
+            .all()
+        )
 
         if not projects:
             logger.info("No projects found in database")
@@ -72,5 +79,5 @@ async def get_projects(db: Session = Depends(get_db)) -> List[ProjectResponse]:
         logger.error(f"Error retrieving projects: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve projects"
+            detail="Failed to retrieve projects",
         )

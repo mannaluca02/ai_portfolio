@@ -47,6 +47,9 @@ class Project(Base):
     team_size = Column(Integer)
     client_company = Column(String(255))  # if client work
 
+    # Display
+    display_order = Column(Integer, default=0)
+
     # Media
     image_urls = Column(ARRAY(Text))  # Array of image URLs
 

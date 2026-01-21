@@ -2,6 +2,7 @@
 Project Schemas
 Pydantic models for project API responses
 """
+
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
 from datetime import datetime, date
@@ -9,6 +10,7 @@ from datetime import datetime, date
 
 class ProjectResponse(BaseModel):
     """Project Response Schema"""
+
     id: int
     name: str
     description: str
@@ -24,6 +26,7 @@ class ProjectResponse(BaseModel):
     team_size: Optional[int] = None
     client_company: Optional[str] = None
     image_urls: Optional[List[str]] = None
+    display_order: int = 0
     slug: str
     section: str
     anchor: str
