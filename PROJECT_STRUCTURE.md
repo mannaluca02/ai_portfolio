@@ -292,7 +292,7 @@ ai_portfolio/
 
 ### Frontend (.env.local)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 

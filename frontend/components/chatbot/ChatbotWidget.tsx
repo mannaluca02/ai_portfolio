@@ -133,7 +133,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
       const startTime = performance.now()
 
       // Call the actual backend API
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
