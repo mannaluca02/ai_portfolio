@@ -37,7 +37,7 @@ export default function DatenschutzPage() {
         <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
 
           {/* Grundsätze */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               1. Grundsätze
             </h2>
@@ -51,7 +51,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Verantwortlicher */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               2. Verantwortlicher
             </h2>
@@ -71,7 +71,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Hosting */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               3. Hosting und Server
             </h2>
@@ -123,7 +123,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* KI-Chatbot */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               4. KI-Chatbot (OpenAI Integration)
             </h2>
@@ -195,7 +195,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Rate Limiting */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               5. Rate Limiting (IP-Speicherung)
             </h2>
@@ -245,7 +245,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Kontaktformular */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               6. Kontaktformular
             </h2>
@@ -272,7 +272,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Analytics */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               7. Web Analytics
             </h2>
@@ -300,7 +300,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Cookies */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               8. Cookies
             </h2>
@@ -330,7 +330,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Ihre Rechte */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               9. Ihre Rechte
             </h2>
@@ -381,7 +381,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Datensicherheit */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               10. Datensicherheit
             </h2>
@@ -396,7 +396,7 @@ export default function DatenschutzPage() {
           </div>
 
           {/* Änderungen */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-4">
               11. Änderungen der Datenschutzerklärung
             </h2>

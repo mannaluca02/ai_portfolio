@@ -35,7 +35,7 @@ export default function ImpressumPage() {
 
         {/* Content */}
         <div className="prose prose-lg dark:prose-invert max-w-none">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 mb-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8 mb-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-6">
               Kontaktadresse
             </h2>
@@ -63,7 +63,7 @@ export default function ImpressumPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 mb-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8 mb-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-6">
               Zweck der Website
             </h2>
@@ -74,7 +74,7 @@ export default function ImpressumPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 mb-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8 mb-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-6">
               Haftungsausschluss
             </h2>
@@ -110,7 +110,7 @@ export default function ImpressumPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm p-8">
             <h2 className="text-2xl font-semibold text-text-light dark:text-text-dark mb-6">
               KI-Chatbot
             </h2>

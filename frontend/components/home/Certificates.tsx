@@ -262,7 +262,7 @@ export default function Certificates() {
           {/* Backdrop */}
           <div
             onClick={() => setViewingCertificate(null)}
-            className="fixed inset-0 bg-black/90 z-50 transition-opacity duration-300"
+            className="fixed inset-0 bg-text-light/20 dark:bg-dark-bg/50 backdrop-blur-sm z-50 transition-opacity duration-300"
           />
 
           {/* Desktop Modal */}
