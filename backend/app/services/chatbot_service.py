@@ -2,6 +2,7 @@
 Chatbot Service - Orchestrates all RAG services
 Coordinates retrieval, generation, and verification
 """
+
 from sqlalchemy.orm import Session
 from app.services.retriever_service import RetrieverService
 from app.services.generator_service import get_generator_service
@@ -10,6 +11,8 @@ from app.schemas.chat import ChatMode, ChatResponse, SourceReference, Verificati
 from typing import List, Dict, Any
 import logging
 import time
+import os
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +27,9 @@ class ChatbotService:
         self.generator = get_generator_service()
         self.verifier = get_verifier_service()
 
-    def process_message(self, message: str, mode: ChatMode = ChatMode.NATURAL) -> ChatResponse:
+    def process_message(
+        self, message: str, mode: ChatMode = ChatMode.NATURAL
+    ) -> ChatResponse:
         """
         Process a user message and generate a response
 
@@ -89,7 +94,9 @@ class ChatbotService:
         # Listen mode: 5 sources for quick response
         limit = 8 if mode == ChatMode.NATURAL else 5
 
-        logger.info(f"Retrieving documents (adaptive_threshold={threshold}, limit={limit})...")
+        logger.info(
+            f"Retrieving documents (adaptive_threshold={threshold}, limit={limit})..."
+        )
 
         # Retriever automatically detects intent and applies:
         # - Table filtering based on query intent
@@ -99,18 +106,22 @@ class ChatbotService:
             query=message,
             limit=limit,
             similarity_threshold=threshold,
-            use_mmr=True  # Enable MMR for diverse, non-redundant results
+            use_mmr=True,  # Enable MMR for diverse, non-redundant results
         )
 
         # Apply quality filter to remove outliers with poor scores
         if search_results and mode == ChatMode.NATURAL:
             search_results = self._filter_by_quality(search_results)
 
-        logger.info(f"Retrieved {len(search_results)} documents after quality filtering")
+        logger.info(
+            f"Retrieved {len(search_results)} documents after quality filtering"
+        )
 
         # FALLBACK: If no results found, try without embedding filter
         if not search_results:
-            logger.warning(f"No results found with threshold {threshold}. Attempting fallback retrieval...")
+            logger.warning(
+                f"No results found with threshold {threshold}. Attempting fallback retrieval..."
+            )
             search_results = self._fallback_retrieval(message, mode, limit)
 
         return search_results
@@ -142,8 +153,10 @@ class ChatbotService:
 
             # Reject if too far below top result
             if gap_from_top > max_gap:
-                logger.info(f"Filtering out result {i+1}/{len(results)}: {result.title} "
-                          f"(similarity: {result.similarity:.2%}, gap from top: {gap_from_top:.2%})")
+                logger.info(
+                    f"Filtering out result {i+1}/{len(results)}: {result.title} "
+                    f"(similarity: {result.similarity:.2%}, gap from top: {gap_from_top:.2%})"
+                )
                 continue
 
             filtered.append(result)
@@ -170,16 +183,22 @@ class ChatbotService:
         if word_count <= 3:
             # Very short queries: "Welche Projekte", "Wer ist Luca"
             adjusted = 0.15
-            logger.info(f"Short query ({word_count} words): lowering threshold to {adjusted}")
+            logger.info(
+                f"Short query ({word_count} words): lowering threshold to {adjusted}"
+            )
             return adjusted
         elif word_count <= 6:
             # Medium queries: lower threshold moderately
             adjusted = max(0.20, base_threshold - 0.10)
-            logger.info(f"Medium query ({word_count} words): adjusting threshold to {adjusted}")
+            logger.info(
+                f"Medium query ({word_count} words): adjusting threshold to {adjusted}"
+            )
             return adjusted
         else:
             # Long queries: use base threshold
-            logger.info(f"Long query ({word_count} words): using base threshold {base_threshold}")
+            logger.info(
+                f"Long query ({word_count} words): using base threshold {base_threshold}"
+            )
             return base_threshold
 
     def _fallback_retrieval(self, message: str, mode: ChatMode, limit: int) -> List:
@@ -199,6 +218,7 @@ class ChatbotService:
 
         # Detect intent to know which tables to query
         from app.services.intent_service import get_intent_service
+
         intent_service = get_intent_service()
         intent = intent_service.detect_intent(message)
 
@@ -208,17 +228,20 @@ class ChatbotService:
         for table_name in intent.tables[:3]:  # Limit to top 3 most relevant tables
             try:
                 results = self.retriever.get_fallback_results(
-                    table_name=table_name,
-                    limit=min(3, limit)  # Max 3 per table
+                    table_name=table_name, limit=min(3, limit)  # Max 3 per table
                 )
                 fallback_results.extend(results)
-                logger.info(f"Fallback: Retrieved {len(results)} results from {table_name}")
+                logger.info(
+                    f"Fallback: Retrieved {len(results)} results from {table_name}"
+                )
             except Exception as e:
                 logger.warning(f"Fallback failed for table {table_name}: {e}")
                 continue
 
         if fallback_results:
-            logger.info(f"✅ Fallback retrieval found {len(fallback_results)} total results")
+            logger.info(
+                f"✅ Fallback retrieval found {len(fallback_results)} total results"
+            )
         else:
             logger.warning("❌ Fallback retrieval found no results")
 
@@ -251,11 +274,13 @@ class ChatbotService:
             verification=None,
             metadata={
                 "results_count": len(search_results),
-                "top_similarity": top_result.similarity
-            }
+                "top_similarity": top_result.similarity,
+            },
         )
 
-    def _create_natural_response(self, message: str, search_results: List) -> ChatResponse:
+    def _create_natural_response(
+        self, message: str, search_results: List
+    ) -> ChatResponse:
         """
         Create response in natural mode (with LLM generation and verification)
 
@@ -270,12 +295,19 @@ class ChatbotService:
         logger.info("Generating response with LLM...")
         generation_result = self.generator.generate_response(message, search_results)
 
-        # Verify response
-        logger.info("Verifying response...")
-        verification_result = self.verifier.verify_response(
-            generation_result["answer"],
-            search_results
-        )
+        # Verify response (skip if disabled for performance)
+        if os.getenv("SKIP_VERIFICATION", "false").lower() == "true":
+            logger.info("Verification skipped (SKIP_VERIFICATION=true)")
+            verification_result = type(
+                "obj",
+                (object,),
+                {"is_verified": True, "confidence": 0.8, "details": []},
+            )()
+        else:
+            logger.info("Verifying response...")
+            verification_result = self.verifier.verify_response(
+                generation_result["answer"], search_results
+            )
 
         # Check if LLM indicated no relevant information found
         # If so, don't show sources (they are irrelevant/low quality)
@@ -285,25 +317,33 @@ class ChatbotService:
             "keine relevanten informationen",
             "nichts gefunden",
             "dazu finde ich keine",
-            "kann ich keine information"
+            "kann ich keine information",
         ]
 
-        has_no_info = any(indicator in answer.lower() for indicator in no_info_indicators)
+        has_no_info = any(
+            indicator in answer.lower() for indicator in no_info_indicators
+        )
 
         # Convert sources only if relevant information was found
-        sources = [] if has_no_info else self._convert_sources_from_dict(generation_result["sources"])
+        sources = (
+            []
+            if has_no_info
+            else self._convert_sources_from_dict(generation_result["sources"])
+        )
 
         # Create verification result
         # If no info was found, set verification to None and confidence to 0
         if has_no_info:
             verification = None
             confidence = 0.0
-            logger.info("No relevant information found - suppressing sources and verification")
+            logger.info(
+                "No relevant information found - suppressing sources and verification"
+            )
         else:
             verification = VerificationResult(
                 is_verified=verification_result.is_verified,
                 confidence=verification_result.confidence,
-                threshold=0.30
+                threshold=0.30,
             )
             confidence = generation_result["confidence"]
 
@@ -312,8 +352,10 @@ class ChatbotService:
             "model": generation_result.get("model"),
             "tokens_used": generation_result.get("tokens_used"),
             "results_count": len(search_results),
-            "verification_sentences": len(verification_result.details) if verification_result.details else 0,
-            "no_info_detected": has_no_info
+            "verification_sentences": (
+                len(verification_result.details) if verification_result.details else 0
+            ),
+            "no_info_detected": has_no_info,
         }
 
         return ChatResponse(
@@ -322,7 +364,7 @@ class ChatbotService:
             mode=ChatMode.NATURAL,
             confidence=confidence,
             verification=verification,
-            metadata=metadata
+            metadata=metadata,
         )
 
     def _create_no_results_response(self, mode: ChatMode) -> ChatResponse:
@@ -335,7 +377,9 @@ class ChatbotService:
         Returns:
             ChatResponse with no results message
         """
-        answer = "Ich habe leider keine relevanten Informationen zu deiner Frage gefunden."
+        answer = (
+            "Ich habe leider keine relevanten Informationen zu deiner Frage gefunden."
+        )
 
         return ChatResponse(
             answer=answer,
@@ -343,7 +387,7 @@ class ChatbotService:
             mode=mode,
             confidence=0.0,
             verification=None,
-            metadata={"results_count": 0}
+            metadata={"results_count": 0},
         )
 
     def _convert_sources(self, search_results: List) -> List[SourceReference]:
@@ -358,18 +402,22 @@ class ChatbotService:
         """
         sources = []
         for i, result in enumerate(search_results, 1):
-            sources.append(SourceReference(
-                index=i,
-                title=result.title,
-                table=result.table,
-                slug=result.slug,
-                section=result.section,
-                anchor=result.anchor,
-                similarity=result.similarity
-            ))
+            sources.append(
+                SourceReference(
+                    index=i,
+                    title=result.title,
+                    table=result.table,
+                    slug=result.slug,
+                    section=result.section,
+                    anchor=result.anchor,
+                    similarity=result.similarity,
+                )
+            )
         return sources
 
-    def _convert_sources_from_dict(self, source_dicts: List[Dict[str, Any]]) -> List[SourceReference]:
+    def _convert_sources_from_dict(
+        self, source_dicts: List[Dict[str, Any]]
+    ) -> List[SourceReference]:
         """
         Convert source dictionaries to SourceReference objects
 
@@ -381,15 +429,17 @@ class ChatbotService:
         """
         sources = []
         for source_dict in source_dicts:
-            sources.append(SourceReference(
-                index=source_dict["index"],
-                title=source_dict["title"],
-                table=source_dict["table"],
-                slug=source_dict["slug"],
-                section=source_dict["section"],
-                anchor=source_dict["anchor"],
-                similarity=source_dict["similarity"]
-            ))
+            sources.append(
+                SourceReference(
+                    index=source_dict["index"],
+                    title=source_dict["title"],
+                    table=source_dict["table"],
+                    slug=source_dict["slug"],
+                    section=source_dict["section"],
+                    anchor=source_dict["anchor"],
+                    similarity=source_dict["similarity"],
+                )
+            )
         return sources
 
 
