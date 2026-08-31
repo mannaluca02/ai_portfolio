@@ -5,6 +5,8 @@ interface HeroProps {
 }
 
 export default function Hero({ onChatClick }: HeroProps) {
+  const currentYear = new Date().getFullYear()
+
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId)
     if (section) {
@@ -28,7 +30,7 @@ export default function Hero({ onChatClick }: HeroProps) {
         {/* Label */}
         <div className="animate-fade-in-up">
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            Portfolio 2025
+            Portfolio {currentYear}
           </span>
         </div>
 
