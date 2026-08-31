@@ -13,6 +13,7 @@ project_type_enum = ENUM(
     "Client Work",
     "Academic",
     "Startup",
+    "Hackathon",
     name="project_type",
     create_type=False,  # Type already exists in DB
 )

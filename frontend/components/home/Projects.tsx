@@ -106,6 +106,7 @@ export default function Projects() {
       'Open Source': 'bg-tekhelet/10 text-tekhelet',
       'Startup': 'bg-red-500/10 text-red-600 dark:text-red-400',
       'Client Work': 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+      'Hackathon': 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     }
     return colors[type] || 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
   }
