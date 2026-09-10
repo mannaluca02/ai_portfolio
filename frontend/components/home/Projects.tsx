@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import FadeInSection from '@/components/ui/FadeInSection'
 
 interface Project {
@@ -27,13 +27,14 @@ interface Project {
 
 type TabType = 'featured' | 'all'
 
-const tabs: TabType[] = ['featured', 'all']
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>('featured')
+  const [pendingLink, setPendingLink] = useState<string | null>(null)
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -56,7 +57,8 @@ export default function Projects() {
   // Handle accordion opening from chatbot links
   useEffect(() => {
     const handleOpenAccordion = (event: CustomEvent) => {
-      const link = event.detail.link
+      const link = event.detail?.link
+      if (typeof link !== 'string') return
 
       // Check if this link is for the projects section
       if (link.includes('project')) {
@@ -77,13 +79,7 @@ export default function Projects() {
 
           setExpandedId(project.id)
 
-          // Scroll to the section after a short delay
-          setTimeout(() => {
-            const element = document.getElementById('projects')
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }
-          }, 100)
+          setPendingLink(`${project.section}-${project.slug}`)
         }
       }
     }
@@ -91,6 +87,17 @@ export default function Projects() {
     window.addEventListener('openAccordion', handleOpenAccordion as EventListener)
     return () => window.removeEventListener('openAccordion', handleOpenAccordion as EventListener)
   }, [projects])
+
+  useEffect(() => {
+    if (!pendingLink) return
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(pendingLink)?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth', block: 'start',
+      })
+      setPendingLink(null)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [pendingLink, activeTab, expandedId, reduceMotion])
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null
@@ -118,8 +125,7 @@ export default function Projects() {
   const featuredCount = featuredProjects.length
   const allCount = allProjects.length
 
-  // Get active index for animation
-  const activeIndex = tabs.indexOf(activeTab)
+  const visibleProjects = activeTab === 'featured' ? featuredProjects : allProjects
 
   // Render project function to avoid duplication
   const renderProject = (project: Project) => {
@@ -128,6 +134,10 @@ export default function Projects() {
     return (
       <div
         key={project.id}
+        id={`${project.section}-${project.slug}`}
+        data-project-id={project.id}
+        data-expanded={isExpanded}
+        style={{ scrollMarginTop: '6rem' }}
         onClick={() => setExpandedId(isExpanded ? null : project.id)}
         className="group cursor-pointer border-b border-gray-200 dark:border-gray-800 pb-6 hover:border-tekhelet dark:hover:border-tekhelet transition-colors duration-300"
       >
@@ -358,48 +368,23 @@ export default function Projects() {
           </div>
         </FadeInSection>
 
-        {/* Projects List with Slider Animation */}
-        <div className="overflow-hidden">
-          <motion.div
-            className="flex"
-            animate={{ x: activeIndex * -100 + '%' }}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 30,
-              bounce: 0,
-              restDelta: 0.01,
-            }}
-          >
-            {/* Featured Tab Content */}
-            <div className="w-full shrink-0 space-y-4">
-              {featuredProjects.map(renderProject)}
-
-              {/* Empty State for Featured */}
-              {featuredProjects.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="text-xl text-text-secondary-light dark:text-text-secondary-dark">
-                    Keine Featured Projekte vorhanden.
-                  </p>
-                </div>
-              )}
+        {/* Only the active panel participates in layout or keyboard navigation. */}
+        <motion.div
+          key={activeTab}
+          className="space-y-4"
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.15 }}
+        >
+          {visibleProjects.map(renderProject)}
+          {visibleProjects.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-xl text-text-secondary-light dark:text-text-secondary-dark">
+                {activeTab === 'featured' ? 'Keine Featured Projekte vorhanden.' : 'Keine Projekte gefunden.'}
+              </p>
             </div>
-
-            {/* All Projects Tab Content */}
-            <div className="w-full shrink-0 space-y-4">
-              {allProjects.map(renderProject)}
-
-              {/* Empty State for All */}
-              {allProjects.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="text-xl text-text-secondary-light dark:text-text-secondary-dark">
-                    Keine Projekte gefunden.
-                  </p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
+          )}
+        </motion.div>
       </div>
     </section>
   )

@@ -2,16 +2,27 @@
 Chat API Routes
 Endpoints for chatbot interactions
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse, ChatMode
-from app.services.chatbot_service import get_chatbot_service, ChatbotService
+import asyncio
 import logging
+
+from fastapi import APIRouter, HTTPException, status
+from starlette.concurrency import run_in_threadpool
+
+from app.config import settings
+from app.database.session import SessionLocal
+from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse
+from app.services.chatbot_service import get_chatbot_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+chat_slots = asyncio.Semaphore(settings.CHAT_MAX_CONCURRENT)
+
+
+def process_in_worker(request: ChatRequest) -> ChatResponse:
+    # Each session is created, used and closed within one worker thread.
+    with SessionLocal() as db:
+        return get_chatbot_service(db).process_message(request.message.strip(), request.mode)
 
 
 @router.post(
@@ -41,7 +52,6 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 )
 async def chat(
     request: ChatRequest,
-    db: Session = Depends(get_db)
 ) -> ChatResponse:
     """
     Process a chat message and return a response
@@ -79,24 +89,19 @@ async def chat(
                 detail="Message cannot be empty"
             )
 
-        # Get chatbot service
-        chatbot = get_chatbot_service(db)
-
-        # Process message
-        response = chatbot.process_message(
-            message=request.message.strip(),
-            mode=request.mode
-        )
-
-        return response
+        if chat_slots.locked():
+            raise HTTPException(status_code=503, detail="Chat is busy. Please retry shortly.",
+                                headers={"Retry-After": "2"})
+        async with chat_slots:
+            return await run_in_threadpool(process_in_worker, request)
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Chat endpoint error: {e}")
+    except Exception:
+        logger.exception("Chat endpoint error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process message: {str(e)}"
+            detail="Failed to process message. Please try again later."
         )
 
 

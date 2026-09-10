@@ -29,13 +29,14 @@ COPY . .
 EXPOSE 8000
 
 # ====== START COMMAND ======
-# - Lädt Modell asynchron im Hintergrund (blockiert nicht den Start)
+# - Lädt fehlende Modelle vor dem Serverstart; Startup wärmt das Modell auf
 # - Nutzt $PORT von Railway (Fallback 8000)
 CMD bash -lc '\
+  set -e; \
   : ${BGE_MODEL_PATH:=./app/ml_models/bge-m3}; \
   if [ ! -d "$BGE_MODEL_PATH" ] || [ -z "$(ls -A "$BGE_MODEL_PATH" 2>/dev/null)" ]; then \
-    echo "[startup] Model missing → downloading in background to $BGE_MODEL_PATH"; \
-    python scripts/download_model.py & \
+    echo "[startup] Downloading model to $BGE_MODEL_PATH before startup"; \
+    python scripts/download_model.py; \
   else \
     echo "[startup] Model present at $BGE_MODEL_PATH"; \
   fi; \

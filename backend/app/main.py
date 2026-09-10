@@ -1,19 +1,25 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config import settings
+from starlette.concurrency import run_in_threadpool
+
 from app.api import (
+    certificate,
     chat,
-    health,
     contact,
-    social,
-    work,
+    education,
+    health,
     project,
     skill,
-    certificate,
-    education,
+    social,
+    work,
 )
+from app.config import settings
 from app.middleware.rate_limiter import DailyMonthlyRateLimiter
-import logging
+from app.services.embedding_service import get_embedding_service
+from app.services.generator_service import get_generator_service
+from app.services.verifier_service import get_verifier_service
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +39,7 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+app.state.chat_ready = False
 
 # CORS Middleware
 app.add_middleware(
@@ -76,6 +83,16 @@ async def startup_event():
     logger.info("Starting Portfolio RAG Chatbot API...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
+    app.state.chat_ready = False
+
+    def warm_up():
+        get_embedding_service().generate_embedding("Portfolio")
+        get_generator_service()
+        get_verifier_service()
+
+    await run_in_threadpool(warm_up)
+    app.state.chat_ready = True
+    logger.info("Chat model loaded and warmed; ready for requests")
 
 
 @app.on_event("shutdown")

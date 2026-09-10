@@ -2,12 +2,13 @@
 Rate Limiting Middleware
 Simple in-memory rate limiter for API endpoints
 """
-from fastapi import Request, HTTPException, status
-from starlette.middleware.base import BaseHTTPMiddleware
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, Tuple
-import logging
+
+from fastapi import HTTPException, Request, status
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,8 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         self.refill_rate = requests_per_minute / 60.0  # Tokens per second
 
         # Storage: {ip: (tokens, last_refill_time)}
-        self.buckets: Dict[str, Tuple[float, datetime]] = defaultdict(
-            lambda: (float(burst_size), datetime.now())
+        self.buckets: dict[str, tuple[float, datetime]] = defaultdict(
+            lambda: (float(burst_size), datetime.now().astimezone())
         )
 
         logger.info(
@@ -104,7 +105,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         Returns:
             bool: True if request is allowed, False otherwise
         """
-        now = datetime.now()
+        now = datetime.now().astimezone()
         tokens, last_refill = self.buckets[client_ip]
 
         # Calculate tokens to add based on time passed
@@ -156,7 +157,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         Args:
             max_age_hours: Maximum age in hours before cleanup
         """
-        now = datetime.now()
+        now = datetime.now().astimezone()
         cutoff = now - timedelta(hours=max_age_hours)
 
         old_ips = [
@@ -177,7 +178,7 @@ class PathBasedRateLimiter(RateLimiterMiddleware):
     Rate limiter with different limits for different paths
     """
 
-    def __init__(self, app, limits: Dict[str, Tuple[int, int]]):
+    def __init__(self, app, limits: dict[str, tuple[int, int]]):
         """
         Initialize path-based rate limiter
 
@@ -224,7 +225,7 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        mode_limits: Dict[str, Dict[str, int]]
+        mode_limits: dict[str, dict[str, int]]
     ):
         """
         Initialize daily/monthly rate limiter
@@ -242,7 +243,7 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
 
         # Storage structure: {ip: {mode: {'daily': {...}, 'monthly': {...}}}}
         # Each period has: {'count': int, 'reset_time': datetime}
-        self.usage: Dict[str, Dict[str, Dict[str, Dict]]] = defaultdict(
+        self.usage: dict[str, dict[str, dict[str, dict]]] = defaultdict(
             lambda: defaultdict(lambda: {
                 'daily': {'count': 0, 'reset_time': self._get_next_day_reset()},
                 'monthly': {'count': 0, 'reset_time': self._get_next_month_reset()}
@@ -253,13 +254,13 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
 
     def _get_next_day_reset(self) -> datetime:
         """Get the next day reset time (midnight)"""
-        now = datetime.now()
+        now = datetime.now().astimezone()
         next_day = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return next_day
 
     def _get_next_month_reset(self) -> datetime:
         """Get the next month reset time (first day of next month)"""
-        now = datetime.now()
+        now = datetime.now().astimezone()
         if now.month == 12:
             next_month = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         else:
@@ -299,7 +300,20 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
                 f"Limits: {daily_limit}/day, {monthly_limit}/month"
             )
 
-            raise RateLimitExceeded(retry_after=3600)  # Retry after 1 hour
+            usage = self.usage[client_ip][mode]
+            resets = [usage[period]['reset_time'] for period in ('daily', 'monthly')
+                      if usage[period]['count'] >= self.mode_limits[mode][period]]
+            retry_after = max(1, int((max(resets) - datetime.now().astimezone()).total_seconds()) + 1)
+            # Middleware sits outside FastAPI's HTTPException handler.
+            return JSONResponse(
+                {"error": "RateLimitExceeded", "message": "Chat limit reached.",
+                 "retry_after": retry_after}, status_code=429,
+                headers={"Retry-After": str(retry_after),
+                         "X-RateLimit-Daily-Limit": str(daily_limit),
+                         "X-RateLimit-Monthly-Limit": str(monthly_limit),
+                         "X-RateLimit-Daily-Remaining": str(max(0, daily_limit - usage['daily']['count'])),
+                         "X-RateLimit-Monthly-Remaining": str(max(0, monthly_limit - usage['monthly']['count']))},
+            )
 
         # Process request
         response = await call_next(request)
@@ -327,15 +341,11 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
             data = json.loads(body) if body else {}
             mode = data.get('mode', 'natural')  # Default to natural
 
-            # Restore body for downstream handlers
-            async def receive():
-                return {"type": "http.request", "body": body}
-
-            request._receive = receive
-
-            return mode
+            # Starlette caches request.body() for downstream consumers. Account
+            # invalid modes as natural; the unchanged body will receive HTTP 422.
+            return mode if isinstance(mode, str) and mode in self.mode_limits else 'natural'
         except Exception as e:
-            logger.warning(f"Failed to extract mode from request: {e}")
+            logger.warning(f"Failed to extract mode from request: {e}", exc_info=True)
             return 'natural'  # Default to natural on error
 
     def _check_rate_limit(self, client_ip: str, mode: str) -> bool:
@@ -349,7 +359,7 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
         Returns:
             bool: True if request is allowed, False otherwise
         """
-        now = datetime.now()
+        now = datetime.now().astimezone()
 
         # Get or initialize usage for this IP/mode
         if mode not in self.usage[client_ip]:
@@ -427,7 +437,7 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
         Args:
             max_age_days: Maximum age in days before cleanup
         """
-        now = datetime.now()
+        now = datetime.now().astimezone()
         cutoff = now - timedelta(days=max_age_days)
 
         old_ips = []
@@ -446,7 +456,7 @@ class DailyMonthlyRateLimiter(BaseHTTPMiddleware):
         if old_ips:
             logger.info(f"Cleaned up {len(old_ips)} old rate limit entries")
 
-    def get_usage_stats(self, client_ip: str) -> Dict[str, Dict]:
+    def get_usage_stats(self, client_ip: str) -> dict[str, dict]:
         """
         Get usage statistics for a specific IP
 

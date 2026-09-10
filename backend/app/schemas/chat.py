@@ -2,9 +2,10 @@
 Chat API Schemas
 Pydantic models for request/response validation
 """
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import Any, ClassVar, Literal
+
+from pydantic import BaseModel, Field
 
 
 class ChatMode(str, Enum):
@@ -17,10 +18,10 @@ class ChatRequest(BaseModel):
     """Chat request schema"""
     message: str = Field(..., min_length=1, max_length=1000, description="User's question")
     mode: ChatMode = Field(default=ChatMode.NATURAL, description="Chat mode (listen or natural)")
-    session_id: Optional[str] = Field(None, description="Optional session ID for conversation tracking")
+    session_id: str | None = Field(None, description="Optional session ID for conversation tracking")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "message": "Welche Python Erfahrung hat Luca?",
                 "mode": "natural",
@@ -40,7 +41,7 @@ class SourceReference(BaseModel):
     similarity: float = Field(..., ge=0.0, le=1.0, description="Similarity score (0-1)")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "index": 1,
                 "title": "Python",
@@ -60,7 +61,7 @@ class VerificationResult(BaseModel):
     threshold: float = Field(..., ge=0.0, le=1.0, description="Verification threshold used")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "is_verified": True,
                 "confidence": 0.72,
@@ -72,14 +73,15 @@ class VerificationResult(BaseModel):
 class ChatResponse(BaseModel):
     """Chat response schema"""
     answer: str = Field(..., description="Generated answer")
-    sources: List[SourceReference] = Field(default=[], description="List of source references")
+    outcome: Literal["answered", "source_fallback", "no_information"] = "answered"
+    sources: list[SourceReference] = Field(default_factory=list, description="List of source references")
     mode: ChatMode = Field(..., description="Chat mode used")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Overall confidence score")
-    verification: Optional[VerificationResult] = Field(None, description="Verification result (only in natural mode)")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+    verification: VerificationResult | None = Field(None, description="Verification result (only in natural mode)")
+    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "answer": "Luca hat 8 Jahre Erfahrung mit Python [1] und nutzt es für Backend-Entwicklung [2].",
                 "sources": [
@@ -113,10 +115,10 @@ class ErrorResponse(BaseModel):
     """Error response schema"""
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
-    details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
+    details: dict[str, Any] | None = Field(None, description="Additional error details")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "error": "RateLimitExceeded",
                 "message": "Rate limit exceeded. Please try again later.",
@@ -131,10 +133,10 @@ class HealthResponse(BaseModel):
     """Health check response schema"""
     status: str = Field(..., description="API status")
     version: str = Field(..., description="API version")
-    services: Dict[str, str] = Field(..., description="Service statuses")
+    services: dict[str, str] = Field(..., description="Service statuses")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "status": "healthy",
                 "version": "1.0.0",

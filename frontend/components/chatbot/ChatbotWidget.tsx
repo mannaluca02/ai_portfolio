@@ -2,6 +2,7 @@
 
 import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { parseChatResponse, type ChatOutcome } from '@/lib/chat-response'
 
 export interface ChatbotWidgetRef {
   open: () => void
@@ -16,17 +17,17 @@ interface Message {
   sources?: Array<{
     title: string
     link: string
-    relevance: number
     index?: number  // Backend index for proper [N] numbering
   }>
   responseTime?: number
-  verified?: boolean
+  outcome?: ChatOutcome
 }
 
 const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
   const [isOpen, setIsOpen] = useState(false)
   const [showFloatingButton, setShowFloatingButton] = useState(false)
-  const [mode, setMode] = useState<ChatMode>('natural')
+  const mode: ChatMode = 'natural'
+  const requestRef = useRef<AbortController | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -65,207 +66,53 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
     }
   }))
 
-  // Helper function to extract referenced source indices from LLM response
-  const extractReferencedSources = (text: string, allSources: any[]): any[] => {
-    // Find all [N] references in the text
-    const references = text.match(/\[(\d+)\]/g) || []
-    const referencedIndices = new Set(
-      references.map(ref => parseInt(ref.replace(/\[|\]/g, '')))
-    )
-
-    // Return only the sources that were referenced
-    // Backend uses 1-indexed, but provides "index" field in each source
-    return allSources.filter((source: any) => {
-      // Use the backend's index field if available
-      const sourceIndex = source.index || (allSources.indexOf(source) + 1)
-      return referencedIndices.has(sourceIndex)
-    })
-  }
-
-  // Helper function to filter sources by table based on query keywords
-  const filterSourcesByQuery = (query: string, sources: any[]): any[] => {
-    const lowerQuery = query.toLowerCase()
-
-    // Work experience keywords
-    if (lowerQuery.match(/arbeit|firma|unternehmen|gearbeitet|beruf|job|position|stelle/)) {
-      return sources.filter(s => s.table === 'work_experiences')
-    }
-
-    // Education keywords
-    if (lowerQuery.match(/studium|ausbildung|universit|hochschule|bachelor|master|abschluss/)) {
-      return sources.filter(s => s.table === 'education')
-    }
-
-    // Skills keywords
-    if (lowerQuery.match(/skill|fähigkeit|können|technolog|programm|sprache|framework/)) {
-      return sources.filter(s => s.table === 'skills')
-    }
-
-    // Projects keywords
-    if (lowerQuery.match(/projekt|entwickelt|gebaut|erstellt|app|website|system/)) {
-      return sources.filter(s => s.table === 'projects')
-    }
-
-    // Certificates keywords
-    if (lowerQuery.match(/zertifikat|zertifizierung|kurs|certificate/)) {
-      return sources.filter(s => s.table === 'certificates')
-    }
-
-    // No specific keywords matched - return all
-    return sources
-  }
+  useEffect(() => () => requestRef.current?.abort(), [])
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputValue
-    }
-
     const userQuery = inputValue.trim()
-    setMessages(prev => [...prev, userMessage])
+    if (!userQuery || requestRef.current) return
+    const controller = new AbortController()
+    requestRef.current = controller
+    const timeout = setTimeout(() => controller.abort(), 35_000)
+    setMessages(previous => [...previous, {
+      id: Date.now().toString(), role: 'user', content: userQuery,
+    }])
     setInputValue('')
     setIsLoading(true)
+    const started = performance.now()
 
     try {
-      const startTime = performance.now()
-
-      // Call the actual backend API
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: inputValue,
-          mode: mode
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userQuery, mode }),
+        signal: controller.signal,
       })
-
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
+        const message = response.status === 429
+          ? 'Dein Chat-Limit ist erreicht. Bitte versuche es später erneut.'
+          : response.status === 503
+            ? 'Der Chat ist gerade ausgelastet. Bitte versuche es in Kürze erneut.'
+            : response.status === 504
+              ? 'Die Anfrage dauert zu lange. Bitte versuche es erneut.'
+              : 'Der Chat ist gerade nicht verfügbar. Bitte versuche es später erneut.'
+        throw new Error(message)
       }
-
-      const data = await response.json()
-      const endTime = performance.now()
-      const responseTime = ((endTime - startTime) / 1000).toFixed(1)
-
-      // Parse the response based on mode
-      let botMessage: Message
-
-      if (mode === 'listen') {
-        // Listen mode: just sources (ignore answer text from backend)
-        // Step 1: Filter by query keywords (table-aware)
-        let filteredSources = filterSourcesByQuery(userQuery, data.sources || [])
-
-        // Step 2: Filter by similarity threshold (45% for better quality)
-        filteredSources = filteredSources
-          .filter((source: any) => source.similarity >= 0.45)
-          .slice(0, 5)
-
-        // Step 3: Map to display format
-        const relevantSources = filteredSources.map((source: any) => ({
-          title: source.title,
-          link: `${source.section}-${source.slug}`,
-          relevance: Math.round(source.similarity * 100)
-        }))
-
-        // Check if we have meaningful results
-        const hasResults = relevantSources.length > 0
-
-        botMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: hasResults
-            ? `📌 ${relevantSources.length} relevante Informationen gefunden:`
-            : 'Dazu habe ich keine Informationen.',
-          sources: relevantSources,
-          responseTime: parseFloat(responseTime)
-        }
-      } else {
-        // Natural mode: LLM response with sources
-        const isVerified = data.verification?.is_verified
-        const confidence = data.verification?.confidence || data.confidence || 0
-        const hasRelevantAnswer = !data.answer?.toLowerCase().includes('keine informationen') &&
-                                   !data.answer?.toLowerCase().includes('nicht gefunden') &&
-                                   !data.answer?.toLowerCase().includes('entschuldigung')
-
-        // Check if query is about work experiences (needs special handling)
-        const isWorkQuery = userQuery.toLowerCase().match(/arbeit|firma|unternehmen|gearbeitet|beruf|job|position|stelle|wo.*gearbeitet/)
-
-        // Show sources if:
-        // 1. Answer is verified, OR
-        // 2. Confidence is above 55% (slightly below the 60% threshold to be more lenient), OR
-        // 3. Answer contains meaningful content and we have high-similarity sources, OR
-        // 4. It's a work query and we have work_experiences in sources
-        const hasHighQualitySources = data.sources?.some((s: any) => s.similarity >= 0.40) || false
-        const hasWorkExperiences = isWorkQuery && data.sources?.some((s: any) => s.table === 'work_experiences')
-        const shouldShowSources = ((isVerified || confidence >= 0.55 || hasHighQualitySources || hasWorkExperiences) && hasRelevantAnswer)
-
-        // Extract only the sources that are actually referenced in the answer text
-        let sourcesToShow: any[] = []
-        if (shouldShowSources && data.sources) {
-          // Lower threshold for work queries (30% instead of 35%)
-          const similarityThreshold = isWorkQuery ? 0.30 : 0.35
-          const filteredSources = data.sources.filter((source: any) => source.similarity >= similarityThreshold)
-
-          // If work query, show ALL work_experiences regardless of references
-          if (isWorkQuery) {
-            const workExperiences = filteredSources.filter((s: any) => s.table === 'work_experiences')
-            const otherReferences = extractReferencedSources(data.answer || '', filteredSources)
-              .filter((s: any) => s.table !== 'work_experiences')
-
-            // Combine: all work experiences + other referenced sources
-            sourcesToShow = [...workExperiences, ...otherReferences]
-
-            // Force show sources for work queries even if not initially verified
-            // Work queries should always show work experiences if they exist
-            if (workExperiences.length > 0 && sourcesToShow.length === 0) {
-              sourcesToShow = workExperiences
-            }
-          } else {
-            // Normal behavior: extract only referenced sources from the answer
-            const referencedSources = extractReferencedSources(data.answer || '', filteredSources)
-
-            // If we found referenced sources, use those. Otherwise fall back to top sources
-            sourcesToShow = referencedSources.length > 0
-              ? referencedSources
-              : filteredSources.slice(0, 5)
-          }
-        }
-
-        const relevantSources = sourcesToShow.map((source: any) => ({
-          title: source.title,
-          link: `${source.section}-${source.slug}`,
-          relevance: Math.round(source.similarity * 100),
-          index: source.index  // Preserve backend index for proper [N] numbering
-        }))
-
-        botMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.answer || 'Entschuldigung, ich konnte keine Antwort finden.',
-          sources: relevantSources,
-          responseTime: parseFloat(responseTime),
-          verified: isVerified || (confidence >= 0.55 && hasHighQualitySources) || (hasWorkExperiences && relevantSources.length > 0)
-        }
-      }
-
-      setMessages(prev => [...prev, botMessage])
+      const answer = parseChatResponse(await response.json())
+      setMessages(previous => [...previous, {
+        id: (Date.now() + 1).toString(), role: 'assistant', ...answer,
+        responseTime: Number(((performance.now() - started) / 1000).toFixed(1)),
+      }])
     } catch (error) {
-      console.error('Chatbot error:', error)
-
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: '❌ Entschuldigung, es gab einen Fehler bei der Verarbeitung deiner Anfrage. Bitte versuche es später erneut.',
-        sources: []
-      }
-
-      setMessages(prev => [...prev, errorMessage])
+      setMessages(previous => [...previous, {
+        id: (Date.now() + 1).toString(), role: 'assistant', sources: [],
+        content: controller.signal.aborted
+          ? 'Die Anfrage dauert zu lange. Bitte versuche es erneut.'
+          : error instanceof Error ? error.message : 'Der Chat ist gerade nicht verfügbar.',
+      }])
     } finally {
+      clearTimeout(timeout)
+      requestRef.current = null
       setIsLoading(false)
     }
   }
@@ -374,7 +221,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                         {message.sources.map((source, index) => (
                           <a
                             key={index}
-                            href={source.link}
+                            href={`#${source.link}`}
                             className="block text-xs p-2 rounded bg-text-light/5 dark:bg-text-dark/5 hover:bg-text-light/10 dark:hover:bg-text-dark/10 transition-colors"
                             onClick={(e) => {
                               e.preventDefault()
@@ -412,7 +259,6 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-medium">[{source.index || index + 1}] {source.title}</span>
-                              <span className="text-tekhelet dark:text-cream opacity-90 font-semibold">{source.relevance}%</span>
                             </div>
                             <div className="flex items-center gap-1 mt-1 text-text-secondary-light dark:text-text-secondary-dark">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -426,11 +272,11 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                     )}
 
                     {/* Response Time & Verification */}
-                    {message.role === 'assistant' && (message.responseTime || message.verified !== undefined) && (
+                    {message.role === 'assistant' && (message.responseTime !== undefined || message.outcome !== undefined) && (
                       <div className="mt-2 pt-2 border-t border-text-light/10 dark:border-text-dark/10 flex items-center gap-3 text-xs opacity-60">
-                        {message.verified !== undefined && (
+                        {message.outcome !== undefined && (
                           <span className="flex items-center gap-1">
-                            {message.verified ? '✓' : '✗'} {message.verified ? 'Verifiziert' : 'Nicht verifiziert'}
+                            {message.outcome === 'answered' ? 'Mit Quellen' : message.outcome === 'source_fallback' ? 'Portfolio-Auszüge' : 'Keine belegte Antwort'}
                           </span>
                         )}
                         {message.responseTime && (
@@ -465,7 +311,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyPress}
                   placeholder="Stell mir eine Frage..."
                   disabled={isLoading}
                   className="flex-1 px-4 py-2 border border-cream-dark dark:border-dark-bg rounded-lg focus:outline-none focus:border-tekhelet bg-cream dark:bg-dark-bg text-text-light dark:text-text-dark disabled:opacity-50"

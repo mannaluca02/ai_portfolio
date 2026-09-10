@@ -2,15 +2,15 @@
 Retriever Service - pgvector Similarity Search
 Performs semantic search across portfolio data using embeddings
 """
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from app.models import WorkExperience, Project, Skill, Certificate, Education, Hobby, ContactInfo, SocialLink
-from app.services.embedding_service import get_embedding_service
-from app.services.intent_service import get_intent_service, QueryIntent
-from typing import List, Dict, Any, Optional
 import logging
+from typing import Any
+
 import numpy as np
-import json
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.services.embedding_service import get_embedding_service
+from app.services.intent_service import QueryIntent, get_intent_service
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 class SearchResult:
     """Search result with similarity score"""
     def __init__(self, id: int, table: str, title: str, content: str,
-                 slug: str, section: str, anchor: str, similarity: float, data: Dict[Any, Any],
-                 embedding: Optional[np.ndarray] = None):
+                 slug: str, section: str, anchor: str, similarity: float, data: dict[Any, Any],
+                 embedding: np.ndarray | None = None):
         self.id = id
         self.table = table
         self.title = title
@@ -28,10 +28,19 @@ class SearchResult:
         self.section = section
         self.anchor = anchor
         self.similarity = similarity
+        self.ranking_score = similarity
         self.data = data
         self.embedding = embedding  # Store for MMR diversification
+
+    def evidence_text(self) -> str:
+        """Current database evidence shared by generation and verification."""
+        fields = [self.title, self.content]
+        for key, value in self.data.items():
+            if value is not None and value != "":
+                fields.append(f"{key}: {value}")
+        return "\n".join(fields)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "id": self.id,
@@ -55,8 +64,8 @@ class RetrieverService:
         self.intent_service = get_intent_service()
     
     def search(self, query: str, limit: int = 5, similarity_threshold: float = 0.6,
-               tables: Optional[List[str]] = None, use_mmr: bool = True,
-               intent: Optional[QueryIntent] = None) -> List[SearchResult]:
+               tables: list[str] | None = None, use_mmr: bool = True,
+               intent: QueryIntent | None = None) -> list[SearchResult]:
         """
         Perform semantic search across all tables with intent-based routing
 
@@ -121,14 +130,12 @@ class RetrieverService:
                 # Apply boost factor to similarity scores
                 if boost_factor != 1.0:
                     for result in results:
-                        result.similarity *= boost_factor
-                        # Clamp to max 1.0
-                        result.similarity = min(result.similarity, 1.0)
+                        result.ranking_score = result.similarity * boost_factor
 
                 all_results.extend(results)
 
             # Sort by similarity (highest first)
-            all_results.sort(key=lambda x: x.similarity, reverse=True)
+            all_results.sort(key=lambda x: x.ranking_score, reverse=True)
 
             # Apply MMR diversification if enabled
             if use_mmr and len(all_results) > limit:
@@ -147,7 +154,7 @@ class RetrieverService:
             raise
     
     def _search_table(self, table_name: str, embedding_str: str, limit: int,
-                      threshold: float, formatter, query_embedding: np.ndarray) -> List[SearchResult]:
+                      threshold: float, formatter, query_embedding: np.ndarray) -> list[SearchResult]:
         """Search a single table using pgvector"""
         try:
             # pgvector similarity search using cosine distance (<=>)
@@ -183,12 +190,12 @@ class RetrieverService:
             logger.info(f"Found {len(results)} results in {table_name}")
             return results
 
-        except Exception as e:
-            logger.error(f"Failed to search {table_name}: {e}")
+        except Exception:
+            logger.exception("Failed to search %s", table_name)
             return []
 
-    def _apply_mmr(self, query_embedding: np.ndarray, candidates: List[SearchResult],
-                   k: int, lambda_param: float = 0.5) -> List[SearchResult]:
+    def _apply_mmr(self, query_embedding: np.ndarray, candidates: list[SearchResult],
+                   k: int, lambda_param: float = 0.5) -> list[SearchResult]:
         """
         Apply Maximal Marginal Relevance to diversify results
 
@@ -221,7 +228,7 @@ class RetrieverService:
 
                 for candidate in remaining:
                     # Relevance score (already normalized 0-1)
-                    relevance = candidate.similarity
+                    relevance = candidate.ranking_score
 
                     # Calculate max similarity to already selected documents
                     max_sim_to_selected = 0.0
@@ -440,7 +447,7 @@ class RetrieverService:
             embedding=embedding
         )
 
-    def get_fallback_results(self, table_name: str, limit: int = 3) -> List[SearchResult]:
+    def get_fallback_results(self, table_name: str, limit: int = 3) -> list[SearchResult]:
         """
         Fallback retrieval without embedding filter.
         Returns most recent/relevant entries when semantic search fails.
@@ -495,11 +502,11 @@ class RetrieverService:
             logger.info(f"Fallback retrieved {len(search_results)} results from {table_name}")
             return search_results
 
-        except Exception as e:
-            logger.error(f"Fallback retrieval failed for {table_name}: {e}")
+        except Exception:
+            logger.exception("Fallback retrieval failed for %s", table_name)
             return []
 
-    def _parse_embedding(self, embedding_str: str) -> Optional[np.ndarray]:
+    def _parse_embedding(self, embedding_str: str) -> np.ndarray | None:
         """
         Parse embedding from database string format to numpy array
 
@@ -525,5 +532,5 @@ class RetrieverService:
                 return None
 
         except Exception as e:
-            logger.warning(f"Failed to parse embedding: {e}")
+            logger.warning(f"Failed to parse embedding: {e}", exc_info=True)
             return None
