@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     # Embedding Model
     BGE_MODEL_PATH: str = "./app/ml_models/bge-m3"
     BGE_MODEL_NAME: str = "BAAI/bge-m3"
+    # Threads for torch's intra-op pool. 0 reads the container's CPU quota from
+    # the cgroup, which is the right default: torch otherwise sizes the pool
+    # from the host's cores and oversubscribes a fraction of a core. Set this by
+    # hand only where the cgroup reports no quota.
+    TORCH_NUM_THREADS: int = Field(default=0, ge=0, le=64)
 
     # Rate Limiting (centralized configuration)
     # Natural Mode (LLM-powered chatbot)

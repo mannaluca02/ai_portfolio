@@ -120,6 +120,8 @@ class VerifierService:
         if not sentences:
             return VerificationResult(False, 0.0, [{"error": "No factual statements"}])
         evidence = [source.evidence_text() for source in sources]
+        if any(not text or not text.strip() for text in evidence):
+            return VerificationResult(False, 0.0, [{"error": "Missing evidence text"}])
         claims = []
         for sentence in sentences:
             indices = [int(n) for n in CITATION.findall(sentence)]
@@ -131,13 +133,19 @@ class VerifierService:
                 return VerificationResult(False, 0.0, [{"error": "Invalid or missing citation"}])
             claims.append((claim, indices))
 
-        # One batch, deduplicated by exact text. Retrieval vectors encode different
-        # text and must not be substituted for verification embeddings.
-        texts = list(dict.fromkeys([c for c, _ in claims] + evidence))
-        vectors = self.embedding_service.generate_embeddings(texts)
-        if len(vectors) != len(texts):
+        # Deduplicated by exact text. Retrieval vectors encode different text and
+        # must not be substituted for verification embeddings. Evidence is row
+        # text and identical across requests, so it is cached and only the
+        # model's own sentences are encoded per request.
+        claim_texts = list(dict.fromkeys(claim for claim, _ in claims))
+        evidence_texts = list(dict.fromkeys(evidence))
+        claim_vectors = self.embedding_service.generate_embeddings(claim_texts)
+        evidence_vectors = self.embedding_service.embed_documents(evidence_texts)
+        if (len(claim_vectors) != len(claim_texts)
+                or len(evidence_vectors) != len(evidence_texts)):
             return VerificationResult(False, 0.0, [{"error": "Incomplete embeddings"}])
-        lookup = dict(zip(texts, vectors))
+        lookup = dict(zip(claim_texts, claim_vectors))
+        lookup.update(zip(evidence_texts, evidence_vectors))
         details = []
         for claim, indices in claims:
             scores = []

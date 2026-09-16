@@ -27,7 +27,9 @@ def verifier():
     service.embedding_service = Mock()
     service.embedding_service.generate_embedding.return_value = np.array([1.0, 0.0])
     service.embedding_service.calculate_similarity.return_value = 1.0
+    # Claims are encoded per request, evidence comes from the cached path.
     service.embedding_service.generate_embeddings.side_effect = lambda texts: [np.array([1.0, 0.0]) for _ in texts]
+    service.embedding_service.embed_documents.side_effect = lambda texts: [np.array([1.0, 0.0]) for _ in texts]
     return service
 
 
@@ -35,9 +37,20 @@ def test_verifier_batches_each_text_once(verifier, sources):
     result = verifier.verify_response("Luca nutzt Python [1]. Luca nutzt React [2].", sources)
     assert result.is_verified
     verifier.embedding_service.generate_embedding.assert_not_called()
-    texts = verifier.embedding_service.generate_embeddings.call_args.args[0]
-    assert len(texts) == len(set(texts))
+    claims = verifier.embedding_service.generate_embeddings.call_args.args[0]
+    evidence = verifier.embedding_service.embed_documents.call_args.args[0]
+    assert len(claims) == len(set(claims))
+    assert len(evidence) == len(set(evidence))
     assert verifier.embedding_service.generate_embeddings.call_count == 1
+    assert verifier.embedding_service.embed_documents.call_count == 1
+
+
+def test_evidence_is_never_re_encoded_per_request(verifier, sources):
+    """Row text does not change, so only the answer's own sentences are encoded."""
+    verifier.verify_response("Luca nutzt Python [1]. Luca nutzt React [2].", sources)
+    encoded = verifier.embedding_service.generate_embeddings.call_args.args[0]
+    assert not any(source.evidence_text() in encoded for source in sources)
+    assert all("Luca nutzt" in claim for claim in encoded)
 
 
 @pytest.mark.parametrize("answer", [
@@ -127,6 +140,7 @@ def test_only_cited_evidence_is_compared(verifier, sources):
     def embed(texts):
         return [np.array([0.0, 1.0]) if "React" in t else np.array([1.0, 0.0]) for t in texts]
     verifier.embedding_service.generate_embeddings.side_effect = embed
+    verifier.embedding_service.embed_documents.side_effect = embed
     assert not verifier.verify_response("Luca nutzt Python [2].", sources).is_verified
 
 
