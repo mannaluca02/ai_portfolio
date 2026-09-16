@@ -1,5 +1,5 @@
 """
-Generator Service - OpenAI GPT-3.5 Response Generation
+Generator Service - OpenAI Response Generation
 Generates natural language responses with source citations
 """
 import logging
@@ -38,68 +38,73 @@ class GeneratorService:
         try:
             # Check if we have any search results
             if not search_results:
-                return {
-                    "answer": "Ich habe leider keine relevanten Informationen zu deiner Frage gefunden.",
-                    "sources": [],
-                    "mode": "natural",
-                    "confidence": 0.0
-                }
+                return self._no_results()
 
-            # Limit context to top N most relevant sources
-            # Too many sources confuse the LLM and cause incorrect citation numbers
-            context_sources = search_results[:max_context_sources]
-
-            logger.info(f"Using top {len(context_sources)} of {len(search_results)} sources for LLM context")
-
-            # Build context from limited search results
-            context = self._build_context(context_sources)
-
-            # Build system prompt
-            system_prompt = self._build_system_prompt()
-
-            # Build user prompt
-            user_prompt = self._build_user_prompt(query, context)
-
-            logger.info(f"Generating response for query: {query[:50]}...")
+            context_sources = self._context_sources(query, search_results, max_context_sources)
 
             # Call OpenAI API
             response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.3,  # Lower for factual, precise responses
-                max_tokens=settings.OPENAI_MAX_TOKENS,
-                top_p=0.9,
-                frequency_penalty=0.0,
-                presence_penalty=0.0
-            )
+                **self._request(query, context_sources))
 
-            # Extract answer
-            answer = (response.choices[0].message.content or "").strip()
-
-            # Extract sources with metadata (only from context sources used)
-            sources = self._extract_sources(context_sources)
-
-            # Calculate confidence (average similarity score of context sources)
-            confidence = sum(r.similarity for r in context_sources) / len(context_sources)
-
-            logger.info(f"✅ Response generated (confidence: {confidence:.2f})")
-
-            return {
-                "answer": answer,
-                "finish_reason": response.choices[0].finish_reason,
-                "sources": sources,
-                "mode": "natural",
-                "confidence": confidence,
-                "model": self.model,
-                "tokens_used": response.usage.total_tokens
-            }
+            return self._result(
+                answer=(response.choices[0].message.content or "").strip(),
+                finish_reason=response.choices[0].finish_reason,
+                tokens_used=response.usage.total_tokens,
+                context_sources=context_sources)
 
         except Exception as e:
             logger.error(f"Failed to generate response: {e}")
             raise
+
+    @staticmethod
+    def _no_results() -> dict[str, Any]:
+        return {
+            "answer": "Ich habe leider keine relevanten Informationen zu deiner Frage gefunden.",
+            "sources": [],
+            "mode": "natural",
+            "confidence": 0.0
+        }
+
+    def _context_sources(self, query: str, search_results: list[SearchResult],
+                         max_context_sources: int) -> list[SearchResult]:
+        # Limit context to top N most relevant sources
+        # Too many sources confuse the LLM and cause incorrect citation numbers
+        context_sources = search_results[:max_context_sources]
+        logger.info(f"Using top {len(context_sources)} of {len(search_results)} sources for LLM context")
+        logger.info(f"Generating response for query: {query[:50]}...")
+        return context_sources
+
+    def _request(self, query: str, context_sources: list[SearchResult]) -> dict[str, Any]:
+        """The request body, kept apart from the call so it is easy to read."""
+        return {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": self._build_system_prompt()},
+                {"role": "user", "content": self._build_user_prompt(
+                    query, self._build_context(context_sources))}
+            ],
+            "temperature": 0.3,  # Lower for factual, precise responses
+            "max_tokens": settings.OPENAI_MAX_TOKENS,
+            "top_p": 0.9,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0,
+        }
+
+    def _result(self, *, answer: str, finish_reason: str | None, tokens_used: int,
+                context_sources: list[SearchResult]) -> dict[str, Any]:
+        # Calculate confidence (average similarity score of context sources)
+        confidence = sum(r.similarity for r in context_sources) / len(context_sources)
+        logger.info(f"✅ Response generated (confidence: {confidence:.2f})")
+        return {
+            "answer": answer,
+            "finish_reason": finish_reason,
+            # Extract sources with metadata (only from context sources used)
+            "sources": self._extract_sources(context_sources),
+            "mode": "natural",
+            "confidence": confidence,
+            "model": self.model,
+            "tokens_used": tokens_used
+        }
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the LLM"""
@@ -122,6 +127,12 @@ INFORMATIONSQUELLE:
 
 ANTWORTFORMAT:
 - Beginne direkt mit der Antwort (keine Floskeln wie "Basierend auf...")
+- JEDER Satz endet mit mindestens einer Quellenangabe [N]. Ein Satz ohne [N]
+  macht die gesamte Antwort ungültig, auch ein einleitender Satz.
+- Richtig: "Luca studiert Data Science an der FHNW [1]. Davor absolvierte er
+  eine Lehre als Informatiker [2]."
+- Falsch: "Luca studiert Data Science an der FHNW. Davor absolvierte er eine
+  Lehre als Informatiker [2]." (erster Satz ohne Quelle)
 - Maximal drei kurze Sätze, jeder Fakt mit [N] vor dem Satzzeichen.
 - Namen, Zahlen, Abschlüsse und Daten exakt aus den Quellen übernehmen.
 - Bei widersprüchlichen oder unzureichenden Quellen keine Behauptung aufstellen.
@@ -148,7 +159,9 @@ VERBOTEN:
 
 FRAGE: {query}
 
-Beantworte die Frage basierend auf den obigen Kontext-Dokumenten. Verwende Quellenzitate [1], [2], etc."""
+Beantworte die Frage basierend auf den obigen Kontext-Dokumenten.
+WICHTIG: Jeder einzelne Satz deiner Antwort muss mit einer Quellenangabe wie [1]
+enden, auch der erste. Ein Satz ohne [N] macht die ganze Antwort ungültig."""
 
     def _extract_sources(self, search_results: list[SearchResult]) -> list[dict[str, Any]]:
         """Extract source metadata for citations"""

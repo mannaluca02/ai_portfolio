@@ -209,7 +209,7 @@ ai_portfolio/
 
 ### Database
 - **PostgreSQL** mit **pgvector Extension**
-- Tabellen: work_experiences, projects, skills, certificates, education, hobbies, contact_info, social_links
+- Tabellen: work_experiences, projects, skills, certificates, education, hobbies, languages, contact_info, social_links
 - Alle Tabellen haben embedding-Spalten für Semantic Search
 
 ## Workflow-Übersicht

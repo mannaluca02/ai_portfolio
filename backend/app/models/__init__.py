@@ -4,6 +4,7 @@ from app.models.skill import Skill
 from app.models.certificate import Certificate
 from app.models.education import Education
 from app.models.hobby import Hobby
+from app.models.language import Language
 from app.models.contact_info import ContactInfo
 from app.models.social_link import SocialLink
 
@@ -14,6 +15,7 @@ __all__ = [
     "Certificate",
     "Education",
     "Hobby",
+    "Language",
     "ContactInfo",
     "SocialLink",
 ]

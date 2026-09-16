@@ -8,6 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['tests/**/*.test.{ts,tsx}'],
     setupFiles: ['./tests/setup.ts'],
-    coverage: { provider: 'v8', include: ['app/api/chat/route.ts', 'lib/chat-response.ts', 'components/home/Projects.tsx'] },
+    coverage: { provider: 'v8', include: ['app/api/chat/route.ts', 'lib/chat-response.ts',
+      'components/chatbot/ChatbotWidget.tsx', 'components/home/Projects.tsx'] },
   },
 })

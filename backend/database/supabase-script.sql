@@ -232,6 +232,28 @@ CREATE TABLE hobbies (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ============================================
+-- LANGUAGES (spoken; programming languages live in skills)
+-- ============================================
+CREATE TABLE languages (
+    id SERIAL PRIMARY KEY,
+    
+    -- Basic Information
+    name VARCHAR(100) NOT NULL UNIQUE, -- e.g., 'Deutsch'
+    level VARCHAR(120) NOT NULL, -- e.g., 'Muttersprache', 'B2 (Cambridge English: First)'
+    description TEXT,
+    
+    -- For pgvector & Links
+    embedding VECTOR(1024),
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    section VARCHAR(100) DEFAULT 'skills', -- the section a source link scrolls to
+    anchor VARCHAR(255) NOT NULL,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- -----------------------------------------------------
 -- 3.6 EDUCATION
 -- -----------------------------------------------------
@@ -279,6 +301,7 @@ CREATE TABLE contact_info (
     title VARCHAR(255), -- e.g., "Senior Full-Stack Developer"
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(50),
+    birth_date DATE, -- source for the chatbot's age answer; never shown verbatim
     
     -- Location
     city VARCHAR(100),
@@ -357,6 +380,9 @@ USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX idx_education_embedding ON education 
 USING hnsw (embedding vector_cosine_ops);
 
+CREATE INDEX idx_languages_embedding ON languages 
+USING hnsw (embedding vector_cosine_ops);
+
 -- Regular Indices
 CREATE INDEX idx_work_experiences_dates ON work_experiences(start_date, end_date);
 CREATE INDEX idx_work_experiences_slug ON work_experiences(slug);
@@ -411,6 +437,11 @@ CREATE TRIGGER update_certificates_updated_at
 
 CREATE TRIGGER update_hobbies_updated_at
     BEFORE UPDATE ON hobbies
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_languages_updated_at
+    BEFORE UPDATE ON languages
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -752,6 +783,34 @@ CREATE VIEW valid_certificates AS
 SELECT * FROM certificates
 WHERE expiration_date IS NULL OR expiration_date > CURRENT_DATE
 ORDER BY issue_date DESC;
+
+-- ============================================
+-- SECURITY: keep the public API out
+-- ============================================
+-- Supabase grants anon/authenticated full privileges on the public schema by
+-- default and expects Row-Level Security to restrain them. This project serves
+-- every byte through its own FastAPI backend, which connects as `postgres` and
+-- therefore bypasses RLS, so the public API should expose nothing at all.
+-- Without this block a fresh setup is readable and writable by anyone holding
+-- the project URL and the anon key.
+
+ALTER TABLE work_experiences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skills           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE certificates     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE education        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hobbies          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE languages        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_info     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE social_links     ENABLE ROW LEVEL SECURITY;
+
+-- Views otherwise run with the owner's rights and would bypass the RLS above.
+ALTER VIEW current_positions  SET (security_invoker = on);
+ALTER VIEW skills_by_category SET (security_invoker = on);
+ALTER VIEW valid_certificates SET (security_invoker = on);
+
+-- RLS does not govern TRUNCATE; only the privilege does.
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 
 -- =====================================================
 -- 8. HELPFUL QUERIES (als Kommentare für Referenz)

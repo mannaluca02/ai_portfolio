@@ -2,9 +2,24 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+
 from app.config import settings
 from app.services import generator_service
 from app.services.retriever_service import SearchResult
+
+# Models measured end to end on the production-log questions that also accept
+# max_tokens. The gpt-5 family rejects that parameter and needs a client change.
+MEASURED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini"}
+
+
+def test_configured_model_was_measured_and_accepts_max_tokens():
+    """gpt-3.5-turbo cited every sentence in only 58 percent of answers."""
+    assert settings.OPENAI_MODEL in MEASURED_MODELS
+
+
+def test_natural_mode_limits_allow_a_real_visitor_session():
+    assert settings.RATE_LIMIT_NATURAL_DAILY >= 50
+    assert settings.RATE_LIMIT_NATURAL_MONTHLY >= 400
 
 
 def test_generator_uses_bounded_configuration_and_shared_evidence(monkeypatch):

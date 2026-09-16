@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
+from sqlalchemy import Column, Date, Integer, String, Text, TIMESTAMP
 from pgvector.sqlalchemy import Vector
 from app.database import Base
 from datetime import datetime
@@ -16,6 +16,9 @@ class ContactInfo(Base):
     title = Column(String(255))  # e.g., "Senior Full-Stack Developer"
     email = Column(String(255), nullable=False)
     phone = Column(String(50))
+    # Source for the age the chatbot answers with. The date itself stays out of
+    # the public API schema and out of the chatbot evidence text.
+    birth_date = Column(Date)
     
     # Location
     city = Column(String(100))

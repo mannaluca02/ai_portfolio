@@ -2,6 +2,7 @@
 Retriever Service - pgvector Similarity Search
 Performs semantic search across portfolio data using embeddings
 """
+
 import logging
 from typing import Any
 
@@ -9,17 +10,43 @@ import numpy as np
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.services.document_service import (
+    TITLE_FIELDS,
+    document_from_record,
+    document_text,
+)
 from app.services.embedding_service import get_embedding_service
-from app.services.intent_service import QueryIntent, get_intent_service
+from app.services.intent_service import (
+    PORTFOLIO_TABLES,
+    QueryIntent,
+    get_intent_service,
+)
+from app.services.query_service import (
+    corpus_entities,
+    corpus_vocabulary,
+    normalize_query,
+    subject_names,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class SearchResult:
     """Search result with similarity score"""
-    def __init__(self, id: int, table: str, title: str, content: str,
-                 slug: str, section: str, anchor: str, similarity: float, data: dict[Any, Any],
-                 embedding: np.ndarray | None = None):
+
+    def __init__(
+        self,
+        id: int,
+        table: str,
+        title: str,
+        content: str,
+        slug: str,
+        section: str,
+        anchor: str,
+        similarity: float,
+        data: dict[Any, Any],
+        embedding: np.ndarray | None = None,
+    ):
         self.id = id
         self.table = table
         self.title = title
@@ -31,15 +58,28 @@ class SearchResult:
         self.ranking_score = similarity
         self.data = data
         self.embedding = embedding  # Store for MMR diversification
+        self.document: str | None = None
+        # Set when intent damped this row's table. It stays available to the
+        # model as evidence; it is only not quoted as an answer of its own.
+        self.off_topic = False
 
     def evidence_text(self) -> str:
-        """Current database evidence shared by generation and verification."""
-        fields = [self.title, self.content]
-        for key, value in self.data.items():
-            if value is not None and value != "":
-                fields.append(f"{key}: {value}")
-        return "\n".join(fields)
-    
+        """Use the same current-row text as embedding generation and excerpts."""
+        if self.document is not None:
+            return self.document
+        # Compatibility for manually constructed results and unit fixtures.
+        row = dict(self.data)
+        row.setdefault(TITLE_FIELDS.get(self.table, "name"), self.title)
+        row.setdefault(
+            (
+                "bio"
+                if self.table == "contact_info"
+                else "url" if self.table == "social_links" else "description"
+            ),
+            self.content,
+        )
+        return document_text(self.table, row)
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
@@ -51,21 +91,27 @@ class SearchResult:
             "section": self.section,
             "anchor": self.anchor,
             "similarity": self.similarity,
-            "data": self.data
+            "data": self.data,
         }
 
 
 class RetrieverService:
     """Service for semantic search using pgvector"""
-    
+
     def __init__(self, db: Session):
         self.db = db
         self.embedding_service = get_embedding_service()
         self.intent_service = get_intent_service()
-    
-    def search(self, query: str, limit: int = 5, similarity_threshold: float = 0.6,
-               tables: list[str] | None = None, use_mmr: bool = True,
-               intent: QueryIntent | None = None) -> list[SearchResult]:
+
+    def search(
+        self,
+        query: str,
+        limit: int = 5,
+        similarity_threshold: float = 0.6,
+        tables: list[str] | None = None,
+        use_mmr: bool = True,
+        intent: QueryIntent | None = None,
+    ) -> list[SearchResult]:
         """
         Perform semantic search across all tables with intent-based routing
 
@@ -86,27 +132,28 @@ class RetrieverService:
                 intent = self.intent_service.detect_intent(query)
                 logger.info(f"Detected intent: {intent.description}")
 
-            # Use intent tables if no explicit tables provided
-            search_tables = tables if tables else intent.tables
+            # Intent affects rank only. Explicit caller filters remain supported.
+            search_tables = tables if tables is not None else PORTFOLIO_TABLES
+
+            # The owner's name matches his own profile/social rows and buries the
+            # row that answers the question, so it is dropped from the search text.
+            db = getattr(self, "db", None)
+            # Loaded once and reused; the verifier reads the cached copy.
+            corpus_vocabulary(db)
+            corpus_entities(db)
+            search_query = normalize_query(query, subject_names(db))
+            if search_query != query:
+                logger.info("Normalised search query for ranking")
 
             # Generate query embedding
-            logger.info(f"Generating embedding for query: {query[:50]}...")
-            query_embedding = self.embedding_service.generate_embedding(query)
+            logger.info(f"Generating embedding for query: {search_query[:50]}...")
+            query_embedding = self.embedding_service.generate_embedding(search_query)
 
             # Convert to list for SQL
             embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
 
             # Define tables to search
-            all_tables = {
-                'work_experiences': self._format_work_experience,
-                'projects': self._format_project,
-                'skills': self._format_skill,
-                'certificates': self._format_certificate,
-                'education': self._format_education,
-                'hobbies': self._format_hobby,
-                'contact_info': self._format_contact_info,
-                'social_links': self._format_social_link
-            }
+            all_tables = self._formatters()
 
             # Search across specified tables
             all_results = []
@@ -124,13 +171,14 @@ class RetrieverService:
                     limit * 3,  # Get more candidates for MMR
                     similarity_threshold,
                     all_tables[table_name],
-                    query_embedding
+                    query_embedding,
                 )
 
                 # Apply boost factor to similarity scores
                 if boost_factor != 1.0:
                     for result in results:
                         result.ranking_score = result.similarity * boost_factor
+                        result.off_topic = boost_factor < 1.0
 
                 all_results.extend(results)
 
@@ -139,22 +187,35 @@ class RetrieverService:
 
             # Apply MMR diversification if enabled
             if use_mmr and len(all_results) > limit:
-                logger.info(f"Applying MMR diversification to {len(all_results)} candidates...")
-                all_results = self._apply_mmr(query_embedding, all_results, limit * 2, lambda_param=0.5)
+                logger.info(
+                    f"Applying MMR diversification to {len(all_results)} candidates..."
+                )
+                all_results = self._apply_mmr(
+                    query_embedding, all_results, limit * 2, lambda_param=0.5
+                )
 
             # Return only the requested number of results (not limit * 2)
             # This prevents overwhelming the LLM with too many sources
             final_results = all_results[:limit]
-            logger.info(f"Returning {len(final_results)} results (threshold={similarity_threshold})")
+            logger.info(
+                f"Returning {len(final_results)} results (threshold={similarity_threshold})"
+            )
 
             return final_results
 
         except Exception as e:
             logger.error(f"Search failed: {e}")
             raise
-    
-    def _search_table(self, table_name: str, embedding_str: str, limit: int,
-                      threshold: float, formatter, query_embedding: np.ndarray) -> list[SearchResult]:
+
+    def _search_table(
+        self,
+        table_name: str,
+        embedding_str: str,
+        limit: int,
+        threshold: float,
+        formatter,
+        query_embedding: np.ndarray,
+    ) -> list[SearchResult]:
         """Search a single table using pgvector"""
         try:
             # pgvector similarity search using cosine distance (<=>)
@@ -173,11 +234,7 @@ class RetrieverService:
 
             result = self.db.execute(
                 query,
-                {
-                    "embedding": embedding_str,
-                    "threshold": threshold,
-                    "limit": limit
-                }
+                {"embedding": embedding_str, "threshold": threshold, "limit": limit},
             )
 
             rows = result.fetchall()
@@ -185,6 +242,9 @@ class RetrieverService:
 
             for row in rows:
                 search_result = formatter(row, table_name)
+                # Evidence for the model and the verifier only. `content` stays the
+                # human-readable field, because it is shown verbatim to visitors.
+                search_result.document = document_from_record(table_name, row)
                 results.append(search_result)
 
             logger.info(f"Found {len(results)} results in {table_name}")
@@ -194,8 +254,13 @@ class RetrieverService:
             logger.exception("Failed to search %s", table_name)
             return []
 
-    def _apply_mmr(self, query_embedding: np.ndarray, candidates: list[SearchResult],
-                   k: int, lambda_param: float = 0.5) -> list[SearchResult]:
+    def _apply_mmr(
+        self,
+        query_embedding: np.ndarray,
+        candidates: list[SearchResult],
+        k: int,
+        lambda_param: float = 0.5,
+    ) -> list[SearchResult]:
         """
         Apply Maximal Marginal Relevance to diversify results
 
@@ -223,7 +288,7 @@ class RetrieverService:
                 remaining.remove(best)
             else:
                 # Calculate MMR score for each remaining candidate
-                best_score = float('-inf')
+                best_score = float("-inf")
                 best_doc = None
 
                 for candidate in remaining:
@@ -236,13 +301,15 @@ class RetrieverService:
                         for selected_doc in selected:
                             if selected_doc.embedding is not None:
                                 sim = self._cosine_similarity(
-                                    candidate.embedding,
-                                    selected_doc.embedding
+                                    candidate.embedding, selected_doc.embedding
                                 )
                                 max_sim_to_selected = max(max_sim_to_selected, sim)
 
                     # MMR score: balance relevance and diversity
-                    mmr_score = lambda_param * relevance - (1 - lambda_param) * max_sim_to_selected
+                    mmr_score = (
+                        lambda_param * relevance
+                        - (1 - lambda_param) * max_sim_to_selected
+                    )
 
                     if mmr_score > best_score:
                         best_score = mmr_score
@@ -254,7 +321,9 @@ class RetrieverService:
                 else:
                     break
 
-        logger.info(f"MMR selected {len(selected)} diverse results from {len(candidates)} candidates")
+        logger.info(
+            f"MMR selected {len(selected)} diverse results from {len(candidates)} candidates"
+        )
         return selected
 
     def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
@@ -265,16 +334,38 @@ class RetrieverService:
         if norm1 == 0 or norm2 == 0:
             return 0.0
         return dot_product / (norm1 * norm2)
-    
+
+    def _formatters(self) -> dict[str, Any]:
+        """One row formatter per portfolio table, in one place.
+
+        Search and fallback retrieval both read this. They used to keep separate
+        copies, and a table added to only one of them was silently unsearchable.
+        """
+        return {
+            "work_experiences": self._format_work_experience,
+            "projects": self._format_project,
+            "skills": self._format_skill,
+            "certificates": self._format_certificate,
+            "education": self._format_education,
+            "hobbies": self._format_hobby,
+            "languages": self._format_language,
+            "contact_info": self._format_contact_info,
+            "social_links": self._format_social_link,
+        }
+
     def _format_work_experience(self, row, table_name: str) -> SearchResult:
         """Format work experience result"""
         # Parse embedding from database (stored as string)
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
             table=table_name,
-            title=f"{row.position} at {row.company}",
+            title=f"{row.position} bei {row.company}",
             content=row.description,
             slug=row.slug,
             section=row.section,
@@ -287,14 +378,18 @@ class RetrieverService:
                 "employment_type": row.employment_type,
                 "start_date": str(row.start_date) if row.start_date else None,
                 "end_date": str(row.end_date) if row.end_date else None,
-                "technologies": row.technologies
+                "technologies": row.technologies,
             },
-            embedding=embedding
+            embedding=embedding,
         )
-    
+
     def _format_project(self, row, table_name: str) -> SearchResult:
         """Format project result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
@@ -311,14 +406,18 @@ class RetrieverService:
                 "technologies": row.technologies,
                 "your_role": row.your_role,
                 "project_url": row.project_url,
-                "github_url": row.github_url
+                "github_url": row.github_url,
             },
-            embedding=embedding
+            embedding=embedding,
         )
-    
+
     def _format_skill(self, row, table_name: str) -> SearchResult:
         """Format skill result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
@@ -333,20 +432,26 @@ class RetrieverService:
                 "name": row.name,
                 "skill_level": row.skill_level,
                 "category": row.category,
-                "years_of_experience": float(row.years_of_experience) if row.years_of_experience else None
+                "years_of_experience": (
+                    float(row.years_of_experience) if row.years_of_experience else None
+                ),
             },
-            embedding=embedding
+            embedding=embedding,
         )
-    
+
     def _format_certificate(self, row, table_name: str) -> SearchResult:
         """Format certificate result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
             table=table_name,
             title=row.name,
-            content=row.description or f"{row.name} from {row.issuing_organization}",
+            content=row.description or f"{row.name}, {row.issuing_organization}",
             slug=row.slug,
             section=row.section,
             anchor=row.anchor,
@@ -355,19 +460,23 @@ class RetrieverService:
                 "name": row.name,
                 "issuing_organization": row.issuing_organization,
                 "issue_date": str(row.issue_date) if row.issue_date else None,
-                "credential_id": row.credential_id
+                "credential_id": row.credential_id,
             },
-            embedding=embedding
+            embedding=embedding,
         )
-    
+
     def _format_education(self, row, table_name: str) -> SearchResult:
         """Format education result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
             table=table_name,
-            title=f"{row.degree} at {row.institution}",
+            title=f"{row.degree}, {row.institution}",
             content=row.description or f"{row.degree} in {row.field_of_study}",
             slug=row.slug,
             section=row.section,
@@ -378,14 +487,18 @@ class RetrieverService:
                 "degree": row.degree,
                 "degree_type": row.degree_type,
                 "field_of_study": row.field_of_study,
-                "grade": row.grade
+                "grade": row.grade,
             },
-            embedding=embedding
+            embedding=embedding,
         )
-    
+
     def _format_hobby(self, row, table_name: str) -> SearchResult:
         """Format hobby result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
@@ -396,16 +509,17 @@ class RetrieverService:
             section=row.section,
             anchor=row.anchor,
             similarity=float(row.similarity),
-            data={
-                "name": row.name,
-                "since_year": row.since_year
-            },
-            embedding=embedding
+            data={"name": row.name, "since_year": row.since_year},
+            embedding=embedding,
         )
-    
+
     def _format_contact_info(self, row, table_name: str) -> SearchResult:
         """Format contact info result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
@@ -421,14 +535,38 @@ class RetrieverService:
                 "title": row.title,
                 "email": row.email,
                 "city": row.city,
-                "country": row.country
+                "country": row.country,
+            },
+            embedding=embedding,
+        )
+
+    def _format_language(self, row, table_name: str) -> SearchResult:
+        """Format spoken language result"""
+        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+
+        return SearchResult(
+            id=row.id,
+            table=table_name,
+            title=row.name,
+            content=row.description or f"{row.name}: {row.level}",
+            slug=row.slug,
+            section=row.section,
+            anchor=row.anchor,
+            similarity=float(row.similarity),
+            data={
+                "name": row.name,
+                "level": row.level
             },
             embedding=embedding
         )
     
     def _format_social_link(self, row, table_name: str) -> SearchResult:
         """Format social link result"""
-        embedding = self._parse_embedding(row.embedding) if hasattr(row, 'embedding') and row.embedding else None
+        embedding = (
+            self._parse_embedding(row.embedding)
+            if hasattr(row, "embedding") and row.embedding
+            else None
+        )
 
         return SearchResult(
             id=row.id,
@@ -439,15 +577,13 @@ class RetrieverService:
             section=row.section,
             anchor=row.anchor,
             similarity=float(row.similarity),
-            data={
-                "platform": row.platform,
-                "url": row.url,
-                "username": row.username
-            },
-            embedding=embedding
+            data={"platform": row.platform, "url": row.url, "username": row.username},
+            embedding=embedding,
         )
 
-    def get_fallback_results(self, table_name: str, limit: int = 3) -> list[SearchResult]:
+    def get_fallback_results(
+        self, table_name: str, limit: int = 3
+    ) -> list[SearchResult]:
         """
         Fallback retrieval without embedding filter.
         Returns most recent/relevant entries when semantic search fails.
@@ -463,16 +599,7 @@ class RetrieverService:
             logger.info(f"Fallback retrieval from {table_name} (limit={limit})...")
 
             # Map table names to formatters
-            formatters = {
-                'work_experiences': self._format_work_experience,
-                'projects': self._format_project,
-                'skills': self._format_skill,
-                'certificates': self._format_certificate,
-                'education': self._format_education,
-                'hobbies': self._format_hobby,
-                'contact_info': self._format_contact_info,
-                'social_links': self._format_social_link
-            }
+            formatters = self._formatters()
 
             if table_name not in formatters:
                 logger.warning(f"Unknown table for fallback: {table_name}")
@@ -499,7 +626,9 @@ class RetrieverService:
                 search_result.similarity = 0.5
                 search_results.append(search_result)
 
-            logger.info(f"Fallback retrieved {len(search_results)} results from {table_name}")
+            logger.info(
+                f"Fallback retrieved {len(search_results)} results from {table_name}"
+            )
             return search_results
 
         except Exception:
@@ -523,8 +652,8 @@ class RetrieverService:
             # pgvector returns embeddings as strings like "[0.1,0.2,...]"
             if isinstance(embedding_str, str):
                 # Remove brackets and split by comma
-                embedding_str = embedding_str.strip('[]')
-                values = [float(x.strip()) for x in embedding_str.split(',')]
+                embedding_str = embedding_str.strip("[]")
+                values = [float(x.strip()) for x in embedding_str.split(",")]
                 return np.array(values, dtype=np.float32)
             elif isinstance(embedding_str, (list, np.ndarray)):
                 return np.array(embedding_str, dtype=np.float32)

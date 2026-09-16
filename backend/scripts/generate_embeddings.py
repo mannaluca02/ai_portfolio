@@ -1,17 +1,28 @@
 """
 Generate embeddings for all existing data
 """
-import sys
 import os
+import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.database import get_db_session
-from app.models import WorkExperience, Project, Skill, Certificate, Education, Hobby, ContactInfo, SocialLink
-from app.services.embedding_service import get_embedding_service
-from sqlalchemy import text
 import logging
+
+from app.database import get_db_session
+from app.models import (
+    Certificate,
+    ContactInfo,
+    Education,
+    Hobby,
+    Language,
+    Project,
+    Skill,
+    SocialLink,
+    WorkExperience,
+)
+from app.services.document_service import document_from_record
+from app.services.embedding_service import get_embedding_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,7 +40,7 @@ def generate_embeddings():
         logger.info("Processing work_experiences...")
         work_exps = db.query(WorkExperience).all()
         for exp in work_exps:
-            text = f"{exp.position} at {exp.company}. {exp.description}"
+            text = document_from_record("work_experiences", exp)
             embedding = embedding_service.generate_embedding(text)
             exp.embedding = embedding.tolist()
         db.commit()
@@ -39,7 +50,7 @@ def generate_embeddings():
         logger.info("\nProcessing projects...")
         projects = db.query(Project).all()
         for proj in projects:
-            text = f"{proj.name}. {proj.description}"
+            text = document_from_record("projects", proj)
             embedding = embedding_service.generate_embedding(text)
             proj.embedding = embedding.tolist()
         db.commit()
@@ -49,7 +60,7 @@ def generate_embeddings():
         logger.info("\nProcessing skills...")
         skills = db.query(Skill).all()
         for skill in skills:
-            text = f"{skill.name} - {skill.skill_level}. {skill.description or ''}"
+            text = document_from_record("skills", skill)
             embedding = embedding_service.generate_embedding(text)
             skill.embedding = embedding.tolist()
         db.commit()
@@ -59,7 +70,7 @@ def generate_embeddings():
         logger.info("\nProcessing certificates...")
         certs = db.query(Certificate).all()
         for cert in certs:
-            text = f"{cert.name} from {cert.issuing_organization}. {cert.description or ''}"
+            text = document_from_record("certificates", cert)
             embedding = embedding_service.generate_embedding(text)
             cert.embedding = embedding.tolist()
         db.commit()
@@ -69,7 +80,7 @@ def generate_embeddings():
         logger.info("\nProcessing education...")
         edu_list = db.query(Education).all()
         for edu in edu_list:
-            text = f"{edu.degree} in {edu.field_of_study or ''} at {edu.institution}. {edu.description or ''}"
+            text = document_from_record("education", edu)
             embedding = embedding_service.generate_embedding(text)
             edu.embedding = embedding.tolist()
         db.commit()
@@ -79,17 +90,27 @@ def generate_embeddings():
         logger.info("\nProcessing hobbies...")
         hobbies = db.query(Hobby).all()
         for hobby in hobbies:
-            text = f"{hobby.name}. {hobby.description}"
+            text = document_from_record("hobbies", hobby)
             embedding = embedding_service.generate_embedding(text)
             hobby.embedding = embedding.tolist()
         db.commit()
         logger.info(f"✅ Generated {len(hobbies)} hobby embeddings")
         
+        # Languages
+        logger.info("\nProcessing languages...")
+        languages = db.query(Language).all()
+        for language in languages:
+            text = document_from_record("languages", language)
+            embedding = embedding_service.generate_embedding(text)
+            language.embedding = embedding.tolist()
+        db.commit()
+        logger.info(f"✅ Generated {len(languages)} language embeddings")
+        
         # Contact Info
         logger.info("\nProcessing contact_info...")
         contacts = db.query(ContactInfo).all()
         for contact in contacts:
-            text = f"{contact.full_name}, {contact.title}. {contact.bio or ''}"
+            text = document_from_record("contact_info", contact)
             embedding = embedding_service.generate_embedding(text)
             contact.embedding = embedding.tolist()
         db.commit()
@@ -99,7 +120,7 @@ def generate_embeddings():
         logger.info("\nProcessing social_links...")
         socials = db.query(SocialLink).all()
         for social in socials:
-            text = f"{social.platform}: {social.url}"
+            text = document_from_record("social_links", social)
             embedding = embedding_service.generate_embedding(text)
             social.embedding = embedding.tolist()
         db.commit()
@@ -108,10 +129,8 @@ def generate_embeddings():
         logger.info("\n✅ All embeddings generated successfully!")
         return True
         
-    except Exception as e:
-        logger.error(f"\n❌ Failed to generate embeddings: {e}")
-        import traceback
-        traceback.print_exc()
+    except Exception:
+        logger.exception("Failed to generate embeddings")
         db.rollback()
         return False
         
