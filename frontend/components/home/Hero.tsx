@@ -41,7 +41,7 @@ export default function Hero({ onChatClick }: HeroProps) {
             <span className="block text-tekhelet mt-2">Luca Manna</span>
           </h1>
           <p className="text-xl md:text-2xl text-text-secondary-light dark:text-text-secondary-dark max-w-2xl leading-relaxed">
-            Data Scientist & Full-Stack Developer
+            Data Scientist & ML Engineer
           </p>
         </div>
 

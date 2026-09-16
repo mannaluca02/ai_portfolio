@@ -78,7 +78,7 @@ export default function Footer() {
               {contactInfo?.full_name || 'Loading...'}
             </h3>
             <p className="text-text-secondary-light dark:text-text-secondary-dark text-sm leading-relaxed">
-              {contactInfo?.title || 'Data Scientist & Full-Stack Developer'}
+              {contactInfo?.title || 'Data Scientist & ML Engineer'}
             </p>
           </div>
 

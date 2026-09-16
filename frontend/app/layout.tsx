@@ -15,15 +15,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://lucamanna.ch'),
   title: {
-    default: 'Luca Manna - Data Scientist & Full-Stack Developer | Basel',
+    default: 'Luca Manna - Data Scientist & ML Engineer | Basel',
     template: '%s | Luca Manna'
   },
-  description: 'Luca Manna - Data Science Student (BSc) & Full-Stack Developer aus Basel. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen. Portfolio mit KI-Chatbot.',
+  description: 'Luca Manna - Data Science Student (BSc) & ML Engineer aus Basel. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen. Portfolio mit KI-Chatbot.',
   keywords: [
     'Luca Manna',
     'Data Scientist Basel',
     'Machine Learning',
-    'Full-Stack Developer Schweiz',
+    'ML Engineer Schweiz',
+    'Machine Learning Engineer',
     'Python Developer',
     'FHNW Student',
     'Data Science Student',
@@ -48,14 +49,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'de_CH',
     url: 'https://lucamanna.ch',
-    title: 'Luca Manna - Data Scientist & Full-Stack Developer',
-    description: 'Data Science Student (BSc) & Full-Stack Developer aus Basel. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen.',
+    title: 'Luca Manna - Data Scientist & ML Engineer',
+    description: 'Data Science Student (BSc) & ML Engineer aus Basel. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen.',
     siteName: 'Luca Manna Portfolio',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Luca Manna - Data Scientist & Full-Stack Developer',
-    description: 'Data Science Student (BSc) & Full-Stack Developer aus Basel. Spezialisiert auf Machine Learning, Python und React.',
+    title: 'Luca Manna - Data Scientist & ML Engineer',
+    description: 'Data Science Student (BSc) & ML Engineer aus Basel. Spezialisiert auf Machine Learning, Python und React.',
     creator: '@lucamanna',
   },
   robots: {

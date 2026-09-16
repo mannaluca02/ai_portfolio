@@ -163,7 +163,41 @@ psql -f backend/database/supabase-script.sql
 - **LLM**: OpenAI gpt-4o-mini with strict source citation requirements
 - **ORM**: SQLAlchemy 2.0
 - **API Framework**: FastAPI 0.118.2
-- **Deployment**: Backend on Railway/Render, Database on Supabase, Frontend planned for Vercel
+- **Deployment**: Backend on Railway (paid Hobby plan, 5 CHF per month), database on
+  Supabase (free tier), frontend on Vercel (Hobby plan).
+
+**The Railway service never sleeps.** The plan is paid, so there is no idle
+shutdown and no cold start to design around. Do not add keep-alive pings,
+warm-up jobs or sleep workarounds for the backend.
+
+The Supabase project is a different matter: on the free tier it pauses after
+7 days without activity. That is what the daily Vercel cron exists for.
+
+## Keeping Supabase awake
+
+Supabase pauses a free-tier project after 7 days without activity. The site
+itself only touches the database when a visitor loads it, so a quiet week would
+put the project to sleep.
+
+`frontend/vercel.json` runs a daily Vercel cron against
+`frontend/app/api/keep-alive/route.ts`, which calls the backend's `/api/health`.
+That endpoint executes `SELECT 1`, so the ping reaches the database rather than
+just the backend, and it is excluded from rate limiting. The route returns 503
+when the backend answers but reports the database as disconnected, because a
+reachable backend with a dead database is the failure worth seeing.
+
+Notes:
+
+- Vercel Hobby allows a daily cron at most, and the exact hour is not
+  guaranteed. That is sufficient against a 7-day pause.
+- Crons only run on production deployments.
+- Set `CRON_SECRET` in the Vercel project to stop anyone from triggering the
+  route; the handler enforces it whenever the variable exists.
+- This is only about Supabase. The Railway backend is on a paid plan and does
+  not sleep, so it needs no ping of its own.
+- The lightweight `/health` route in `app/main.py` sits inside
+  `if __name__ == "__main__":` and therefore never registers under uvicorn;
+  `/api/health` is the endpoint that exists in production.
 
 ## Configuration
 

@@ -3,7 +3,7 @@ export default function StructuredData() {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: 'Luca Manna',
-    jobTitle: 'Data Science Student & Full-Stack Developer',
+    jobTitle: 'Data Scientist & ML Engineer',
     description: 'Data Science Student (BSc) an der FHNW. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen.',
     url: 'https://lucamanna.ch',
     email: 'mannaluca02@gmail.com',
@@ -39,7 +39,7 @@ export default function StructuredData() {
     '@type': 'WebSite',
     name: 'Luca Manna Portfolio',
     url: 'https://lucamanna.ch',
-    description: 'Portfolio von Luca Manna - Data Science Student & Full-Stack Developer aus Basel',
+    description: 'Portfolio von Luca Manna - Data Scientist & ML Engineer aus Basel',
     author: {
       '@type': 'Person',
       name: 'Luca Manna'
