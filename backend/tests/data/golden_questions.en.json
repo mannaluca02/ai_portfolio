@@ -1,0 +1,472 @@
+{
+  "schema_version": 1,
+  "corpus_version": "production-log-2026-09-10+public-api-review-2026-09-11+birth-date-2026-09-12+languages-2026-09-13",
+  "notes": "English translations of the 27 reviewed German questions, preserving source labels. These are translated evaluation cases, not original visitor logs.",
+  "questions": [
+    {
+      "id": "log01",
+      "question": "What has Luca studied?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "education",
+          "slug": "edu-bsc-data-science-fhnw"
+        },
+        {
+          "table": "education",
+          "slug": "edu-informatiker-efz-novartis"
+        },
+        {
+          "table": "education",
+          "slug": "edu-berufsmaturitaet-basel"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. Regression: failed in production with no_information after 0.6s."
+    },
+    {
+      "id": "log02",
+      "question": "What is Fundyour.club?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-fundyour-club"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. ANCHOR: worked in production (as excerpts). Must not regress."
+    },
+    {
+      "id": "log03",
+      "question": "How old is he?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "contact_info",
+          "slug": "contact"
+        }
+      ],
+      "required_answer_fragments": [
+        "years"
+      ],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Answerable from 2026-09-12: contact_info carries birth_date (database/migration_4_birth_date.sql) and the age is computed per request. Requires that migration plus re-run embeddings; until both are applied on the live corpus this question fails."
+    },
+    {
+      "id": "log04",
+      "question": "Where has Luca worked?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "work_experiences",
+          "slug": "work-novartis-ag-2020"
+        },
+        {
+          "table": "education",
+          "slug": "edu-informatiker-efz-novartis"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [
+        "Google"
+      ],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. Regression: failed in production with no_information after 13.6s."
+    },
+    {
+      "id": "log05",
+      "question": "What did Luca do at Novartis?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "work_experiences",
+          "slug": "work-novartis-ag-2020"
+        },
+        {
+          "table": "education",
+          "slug": "edu-informatiker-efz-novartis"
+        }
+      ],
+      "required_answer_fragments": [
+        "Novartis"
+      ],
+      "forbidden_answer_fragments": [
+        "Google"
+      ],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. Regression: failed in production with no_information after 11.2s."
+    },
+    {
+      "id": "log06",
+      "question": "What is the Product Affinity Model?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-product-affinity-model"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. ANCHOR: worked in production (as excerpts). Must not regress."
+    },
+    {
+      "id": "log07",
+      "question": "What is PostFinance Horizons?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-postfinance-horizons"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. ANCHOR: worked in production (as excerpts). Must not regress."
+    },
+    {
+      "id": "log08",
+      "question": "What is the AI Digital Portfolio with RAG Chatbot P?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-ai-portfolio-rag-chatbot"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. ANCHOR: worked in production despite the truncated trailing 'P'. Must not regress."
+    },
+    {
+      "id": "log09",
+      "question": "Has Luca worked with PyTorch?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-cnn-hyperparameter-tuning"
+        }
+      ],
+      "required_answer_fragments": [
+        "PyTorch"
+      ],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. Regression: failed in production. PyTorch exists only in projects.technologies, so this stays broken until re-embedding runs."
+    },
+    {
+      "id": "log10",
+      "question": "Do you know Java?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "skills",
+          "slug": "skill-java"
+        }
+      ],
+      "required_answer_fragments": [
+        "Java"
+      ],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. ANCHOR: worked in production despite second-person phrasing. Must not regress."
+    },
+    {
+      "id": "log11",
+      "question": "Does he know Docker?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "skills",
+          "slug": "skill-docker"
+        },
+        {
+          "table": "projects",
+          "slug": "project-postfinance-horizons"
+        }
+      ],
+      "required_answer_fragments": [
+        "Docker"
+      ],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. Regression: failed in production with no_information after 4.8s, though the Docker skill row exists."
+    },
+    {
+      "id": "log12",
+      "question": "Is he an expert in Agile Development?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "skills",
+          "slug": "skill-agile"
+        }
+      ],
+      "required_answer_fragments": [
+        "Agile"
+      ],
+      "forbidden_answer_fragments": [],
+      "notes": "Verbatim from the owner's production chat log of 2026-09-10, spelling, casing and pronouns preserved. Expected outcome is the TARGET state, not current behaviour. ANCHOR: worked in production despite the typo. Must not regress."
+    },
+    {
+      "id": "q03",
+      "question": "Where does Luca live?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "contact_info",
+          "slug": "contact"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q07",
+      "question": "When did Luca start his studies?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "education",
+          "slug": "edu-bsc-data-science-fhnw"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q11",
+      "question": "What role did Luca have at Novartis?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "work_experiences",
+          "slug": "work-novartis-ag-2020"
+        },
+        {
+          "table": "education",
+          "slug": "edu-informatiker-efz-novartis"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q13",
+      "question": "Does Luca know Docker?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "skills",
+          "slug": "skill-docker"
+        },
+        {
+          "table": "projects",
+          "slug": "project-postfinance-horizons"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q14",
+      "question": "Does Luca have experience with PyTorch?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-cnn-hyperparameter-tuning"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q19",
+      "question": "How many years of Python experience are documented?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "skills",
+          "slug": "skill-python"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q21",
+      "question": "Which projects use PyTorch?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-cnn-hyperparameter-tuning"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q22",
+      "question": "Which project uses Docker?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-postfinance-horizons"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q24",
+      "question": "Which technologies does the portfolio use?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "projects",
+          "slug": "project-ai-portfolio-rag-chatbot"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q29",
+      "question": "What achievements are documented in his studies?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "education",
+          "slug": "edu-bsc-data-science-fhnw"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q32",
+      "question": "How can I contact Luca by email?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "contact_info",
+          "slug": "contact"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "q35",
+      "question": "Is Luca available for new projects?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "contact_info",
+          "slug": "contact"
+        }
+      ],
+      "notes": "Source-reviewed from public portfolio APIs; see source_review.json. Candidate question, not claimed to be from the missing log.",
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": []
+    },
+    {
+      "id": "lang01",
+      "question": "Which languages does Luca speak?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "languages",
+          "slug": "lang-deutsch"
+        },
+        {
+          "table": "languages",
+          "slug": "lang-englisch"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [],
+      "notes": "Spoken languages, supplied by the owner on 2026-09-13: German native, English Cambridge B2. Requires database/migration_5_languages.sql and a re-run of the embeddings."
+    },
+    {
+      "id": "lang02",
+      "question": "What is his native language?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "languages",
+          "slug": "lang-deutsch"
+        }
+      ],
+      "required_answer_fragments": [
+        "German"
+      ],
+      "forbidden_answer_fragments": [],
+      "notes": "Must resolve to the language row, not to the bio, which is merely written in German."
+    },
+    {
+      "id": "lang03",
+      "question": "Which programming languages does he know?",
+      "reviewed": true,
+      "expected_outcome": "answered",
+      "expected_sources": [
+        {
+          "table": "skills",
+          "slug": "skill-python"
+        },
+        {
+          "table": "skills",
+          "slug": "skill-java"
+        },
+        {
+          "table": "skills",
+          "slug": "skill-php"
+        }
+      ],
+      "required_answer_fragments": [],
+      "forbidden_answer_fragments": [
+        "native language"
+      ],
+      "notes": "Guards the word-boundary rule: a question about programming languages must not be routed to the spoken-language rows."
+    }
+  ]
+}

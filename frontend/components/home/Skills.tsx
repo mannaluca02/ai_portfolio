@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import FadeInSection from '@/components/ui/FadeInSection'
 
@@ -17,13 +19,16 @@ interface SkillsByCategory {
 }
 
 export default function Skills() {
+  const t = useTranslations('Skills')
+  const locale = useLocale()
+
   const [skills, setSkills] = useState<Skill[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const response = await fetch('/api/skills')
+        const response = await fetch(`/api/skills?lang=${locale}`)
         if (response.ok) {
           const data = await response.json()
           setSkills(data)
@@ -36,7 +41,7 @@ export default function Skills() {
     }
 
     fetchSkills()
-  }, [])
+  }, [locale])
 
   // Group skills by category
   const skillsByCategory: SkillsByCategory = skills.reduce((acc, skill) => {
@@ -89,14 +94,14 @@ export default function Skills() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            05 — Skills
+            {t('section')}
           </span>
         </FadeInSection>
 
         {/* Section Title */}
         <FadeInSection delay={100}>
           <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-            Fähigkeiten & Expertise
+            {t('title')}
           </h2>
         </FadeInSection>
 
@@ -124,7 +129,7 @@ export default function Skills() {
                         <div className="flex items-center gap-2">
                           {skill.years_of_experience && (
                             <span className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                              {skill.years_of_experience} {skill.years_of_experience === 1 ? 'Jahr' : 'Jahre'}
+                              {t('years', {count: Number(skill.years_of_experience)})}
                             </span>
                           )}
                           <span className="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">
@@ -159,7 +164,7 @@ export default function Skills() {
           <FadeInSection delay={200}>
             <div className="text-center py-16">
               <p className="text-xl text-text-secondary-light dark:text-text-secondary-dark">
-                Keine Skills gefunden.
+                {t('empty')}
               </p>
             </div>
           </FadeInSection>

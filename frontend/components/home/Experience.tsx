@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import FadeInSection from '@/components/ui/FadeInSection'
 
@@ -21,6 +23,9 @@ interface WorkExperience {
 }
 
 export default function Experience() {
+  const t = useTranslations('Experience')
+  const locale = useLocale()
+
   const [experiences, setExperiences] = useState<WorkExperience[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -28,7 +33,7 @@ export default function Experience() {
   useEffect(() => {
     const fetchExperiences = async () => {
       try {
-        const response = await fetch('/api/work-experiences')
+        const response = await fetch(`/api/work-experiences?lang=${locale}`)
         if (response.ok) {
           const data = await response.json()
           setExperiences(data)
@@ -41,7 +46,7 @@ export default function Experience() {
     }
 
     fetchExperiences()
-  }, [])
+  }, [locale])
 
   // Handle accordion opening from chatbot links
   useEffect(() => {
@@ -77,7 +82,7 @@ export default function Experience() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+    return date.toLocaleDateString(locale === 'de' ? 'de-CH' : 'en-GB', { month: 'short', year: 'numeric' })
   }
 
   const calculateDuration = (start: string, end?: string) => {
@@ -89,11 +94,11 @@ export default function Experience() {
     const remainingMonths = months % 12
 
     if (years > 0 && remainingMonths > 0) {
-      return `${years} Jahr${years > 1 ? 'e' : ''}, ${remainingMonths} Monat${remainingMonths > 1 ? 'e' : ''}`
+      return `${t('years', {count: years})}, ${t('months', {count: remainingMonths})}`
     } else if (years > 0) {
-      return `${years} Jahr${years > 1 ? 'e' : ''}`
+      return t('years', {count: years})
     } else {
-      return `${remainingMonths} Monat${remainingMonths > 1 ? 'e' : ''}`
+      return t('months', {count: remainingMonths})
     }
   }
 
@@ -121,14 +126,14 @@ export default function Experience() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            02 — Erfahrung
+            {t('section')}
           </span>
         </FadeInSection>
 
         {/* Section Title */}
         <FadeInSection delay={100}>
           <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-            Berufserfahrung
+            {t('title')}
           </h2>
         </FadeInSection>
 
@@ -152,7 +157,7 @@ export default function Experience() {
                       <div className="flex flex-wrap items-center gap-3 text-text-secondary-light dark:text-text-secondary-dark">
                         <span className="font-medium">{exp.company}</span>
                         <span className="text-sm">
-                          {formatDate(exp.start_date)} - {exp.end_date ? formatDate(exp.end_date) : 'Heute'}
+                          {formatDate(exp.start_date)} - {exp.end_date ? formatDate(exp.end_date) : t('present')}
                         </span>
                       </div>
                     </div>
@@ -194,7 +199,7 @@ export default function Experience() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
-                          {exp.employment_type}
+                          {t.has(`employment.${exp.employment_type}`) ? t(`employment.${exp.employment_type}`) : exp.employment_type}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +218,7 @@ export default function Experience() {
                       {exp.responsibilities && exp.responsibilities.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-text-light dark:text-text-dark mb-3 uppercase tracking-wider">
-                            Aufgaben & Verantwortlichkeiten
+                            {t('responsibilities')}
                           </h4>
                           <ul className="space-y-2">
                             {exp.responsibilities.map((resp, idx) => (
@@ -232,7 +237,7 @@ export default function Experience() {
                       {exp.technologies && exp.technologies.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-text-light dark:text-text-dark mb-3 uppercase tracking-wider">
-                            Technologien
+                            {t('technologies')}
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {exp.technologies.map((tech, idx) => (
@@ -259,7 +264,7 @@ export default function Experience() {
           <FadeInSection delay={200}>
             <div className="text-center py-16">
               <p className="text-xl text-text-secondary-light dark:text-text-secondary-dark">
-                Keine Berufserfahrung gefunden.
+                {t('empty')}
               </p>
             </div>
           </FadeInSection>

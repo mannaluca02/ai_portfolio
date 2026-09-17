@@ -197,12 +197,12 @@ def sse_events(lines: Iterable[str]) -> Iterator[tuple[str, Any]]:
 
 
 def measure(client: httpx.Client, endpoint: str, q: Question, *, protocol: str,
-            k: int = 5) -> dict[str, Any]:
+            k: int = 5, language: str = "de") -> dict[str, Any]:
     started = perf_counter()
     first_token = None
     result = {"id": q.id, "question": q.question, "passed": False}
     try:
-        with client.stream("POST", endpoint, json={"message": q.question, "mode": "natural"}) as response:
+        with client.stream("POST", endpoint, json={"message": q.question, "mode": "natural", "language": language}) as response:
             result["status_code"] = response.status_code
             if response.status_code != 200:
                 return {**result, "error": f"HTTP {response.status_code}",
@@ -237,7 +237,7 @@ def measure(client: httpx.Client, endpoint: str, q: Question, *, protocol: str,
 
 
 def run_questions(client: httpx.Client, endpoint: str, questions: list[Question], *,
-                  max_requests: int, protocol: str, repeats: int = 1, k: int = 5) -> list[dict[str, Any]]:
+                  max_requests: int, protocol: str, repeats: int = 1, k: int = 5, language: str = "de") -> list[dict[str, Any]]:
     if repeats < 1 or k < 1 or not questions:
         raise ValueError("Positive repeats/k and at least one question are required")
     if len(questions) * repeats > max_requests:
@@ -247,7 +247,7 @@ def run_questions(client: httpx.Client, endpoint: str, questions: list[Question]
     results = []
     for repeat in range(repeats):
         for q in questions:
-            result = measure(client, endpoint, q, protocol=protocol, k=k)
+            result = measure(client, endpoint, q, protocol=protocol, k=k, language=language)
             result["repeat"] = repeat + 1
             results.append(result)
             if result.get("status_code") == 429:
@@ -277,6 +277,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--k", type=int, default=5)
     parser.add_argument("--timeout", type=float, default=35)
     parser.add_argument("--protocol", choices=["json", "sse"], default="json")
+    parser.add_argument("--language", choices=["de", "en"], default="de")
     parser.add_argument("--label", default="unlabelled")
     args = parser.parse_args(argv)
     try:
@@ -286,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
         unknown = set(args.question_id) - {q.id for q in dataset.questions}
         if unknown or args.repeats < 1 or args.k < 1 or not math.isfinite(args.timeout) or args.timeout <= 0:
             raise ValueError("Unknown question ID or invalid repeats/k/timeout")
-        plan = {"dry_run": not args.execute, "label": args.label,
+        plan = {"dry_run": not args.execute, "label": args.label, "language": args.language,
                 "dataset_sha256": hashlib.sha256(raw).hexdigest(), "corpus_version": dataset.corpus_version,
                 "protocol": args.protocol, "k": args.k, "planned_requests": len(questions) * args.repeats,
                 "questions": [{"id": q.id, "question": q.question} for q in questions],
@@ -303,7 +304,7 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("Execution requires a sufficient --max-requests budget")
         with httpx.Client(timeout=args.timeout, follow_redirects=False, trust_env=False) as client:
             results = run_questions(client, endpoint, questions, repeats=args.repeats,
-                                    max_requests=args.max_requests, protocol=args.protocol, k=args.k)
+                                    max_requests=args.max_requests, protocol=args.protocol, k=args.k, language=args.language)
         report = {**plan, "endpoint": endpoint, "results": results,
                   "summary": summarize(results, planned=plan["planned_requests"])}
         print(json.dumps(report, ensure_ascii=False, indent=2))

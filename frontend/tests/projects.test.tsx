@@ -1,4 +1,7 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {NextIntlClientProvider} from 'next-intl'
+import messages from '../messages/de.json'
+import type {ReactElement} from 'react'
+import { act, fireEvent, render as baseRender, screen, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import Projects from '@/components/home/Projects'
@@ -49,3 +52,5 @@ describe('project tabs', () => {
     expect(screen.queryByText('Other fixture')).toBeNull()
   })
 })
+
+function render(element: ReactElement) { return baseRender(<NextIntlClientProvider locale="de" messages={messages}>{element}</NextIntlClientProvider>) }

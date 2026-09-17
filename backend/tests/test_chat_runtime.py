@@ -103,16 +103,17 @@ async def test_rate_limit_is_http_429_through_real_middleware(api):
 
 
 @pytest.mark.asyncio
-async def test_middleware_preserves_body_and_rejects_unknown_modes(api, monkeypatch):
+@pytest.mark.parametrize("language", ["de", "en"])
+async def test_middleware_preserves_body_and_rejects_unknown_modes(api, monkeypatch, language):
     from app.middleware.rate_limiter import DailyMonthlyRateLimiter
     app, _ = api
     process = Mock(return_value=ChatResponse(answer="No information", mode=ChatMode.NATURAL, confidence=0))
     monkeypatch.setattr(chat_api, "get_chatbot_service", lambda db: Mock(process_message=process))
     app.add_middleware(DailyMonthlyRateLimiter, mode_limits={"natural": {"daily": 10, "monthly": 20}})
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
-        success = await client.post('/api/chat', json={"message": "Python?", "mode": "natural"})
+        success = await client.post('/api/chat', json={"message": "Python?", "mode": "natural", "language": language})
         invalid = await client.post('/api/chat', json={"message": "Python?", "mode": "invalid"})
     assert success.status_code == 200
     assert success.headers['x-ratelimit-daily-remaining'] == '9'
     assert invalid.status_code == 422
-    process.assert_called_once_with("Python?", ChatMode.NATURAL)
+    process.assert_called_once_with("Python?", ChatMode.NATURAL, language=language)

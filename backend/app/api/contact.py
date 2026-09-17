@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.contact_info import ContactInfo
 from app.schemas.contact import ContactInfoResponse
+from app.services.translation_service import Language, overlay_translations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/api", tags=["contact"])
     summary="Get contact information",
     description="Retrieve the primary contact information from the database"
 )
-async def get_contact_info(db: Session = Depends(get_db)) -> ContactInfoResponse:
+async def get_contact_info(db: Session = Depends(get_db), lang: Language = 'de') -> ContactInfoResponse:
     """
     Get contact information
 
@@ -61,7 +62,7 @@ async def get_contact_info(db: Session = Depends(get_db)) -> ContactInfoResponse
                 detail="Contact information not found"
             )
 
-        return contact_info
+        return overlay_translations(db, 'contact_info', [contact_info], lang)[0]
 
     except HTTPException:
         raise

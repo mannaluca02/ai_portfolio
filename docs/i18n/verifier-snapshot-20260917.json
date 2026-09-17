@@ -1,0 +1,228 @@
+{
+  "scope": "Public API snapshot of six tables, retrieved 2026-09-16. Not the full live corpus. No LLM generation or retrieval evaluation.",
+  "model": "local bge-m3",
+  "results": {
+    "de": {
+      "claims": [
+        {
+          "claim": "Java ist eine sekundäre Backend-Sprache [1].",
+          "supported": true,
+          "score": 0.7111464738845825
+        },
+        {
+          "claim": "Zu den Methoden gehören Scrum und Kanban [1].",
+          "supported": true,
+          "score": 0.6550962328910828
+        },
+        {
+          "claim": "Docker wird für Containerisierung eingesetzt [1].",
+          "supported": true,
+          "score": 0.6589128971099854
+        },
+        {
+          "claim": "Das Projekt entstand an einem Hackathon [1].",
+          "supported": true,
+          "score": 0.5722850561141968
+        },
+        {
+          "claim": "Fundyour.club ermöglicht Vereinen das Sammeln von Spenden [1].",
+          "supported": true,
+          "score": 0.7532199621200562
+        },
+        {
+          "claim": "Die Plattform nutzt ein MVC-Backend in PHP [1].",
+          "supported": true,
+          "score": 0.5645081400871277
+        },
+        {
+          "claim": "Das Bachelorstudium umfasst Machine Learning und Statistik [1].",
+          "supported": true,
+          "score": 0.6623659729957581
+        },
+        {
+          "claim": "Bei Novartis gab es einen Einsatz im Second Level Support [1].",
+          "supported": true,
+          "score": 0.5888592004776001
+        },
+        {
+          "claim": "Es gab eine Anstellung bei Google [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "Das Studium fand an der ETH Zürich statt [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "Docker wurde zwanzig Jahre lang eingesetzt [1].",
+          "supported": false,
+          "score": 0.48510661721229553
+        },
+        {
+          "claim": "Docker wird nicht eingesetzt [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "Es gibt einen Doktortitel in Medizin [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "Das Projekt wurde für Microsoft entwickelt [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "Zu den Methoden gehört Waterfall [1].",
+          "supported": false,
+          "score": 0.0
+        }
+      ],
+      "thresholds": [
+        {
+          "threshold": 0.4,
+          "accepted_supported": 8,
+          "accepted_unsupported": 1
+        },
+        {
+          "threshold": 0.45,
+          "accepted_supported": 8,
+          "accepted_unsupported": 1
+        },
+        {
+          "threshold": 0.5,
+          "accepted_supported": 8,
+          "accepted_unsupported": 0
+        },
+        {
+          "threshold": 0.55,
+          "accepted_supported": 8,
+          "accepted_unsupported": 0
+        },
+        {
+          "threshold": 0.6,
+          "accepted_supported": 5,
+          "accepted_unsupported": 0
+        },
+        {
+          "threshold": 0.65,
+          "accepted_supported": 5,
+          "accepted_unsupported": 0
+        }
+      ]
+    },
+    "en": {
+      "claims": [
+        {
+          "claim": "Java is a secondary backend language [1].",
+          "supported": true,
+          "score": 0.7137562036514282
+        },
+        {
+          "claim": "The methods include Scrum and Kanban [1].",
+          "supported": true,
+          "score": 0.6769579648971558
+        },
+        {
+          "claim": "Docker is used for containerisation [1].",
+          "supported": true,
+          "score": 0.6655347943305969
+        },
+        {
+          "claim": "The project was created at a hackathon [1].",
+          "supported": true,
+          "score": 0.575730562210083
+        },
+        {
+          "claim": "Fundyour.club allows clubs to collect donations [1].",
+          "supported": true,
+          "score": 0.7522363066673279
+        },
+        {
+          "claim": "The platform uses an MVC backend in PHP [1].",
+          "supported": true,
+          "score": 0.5437324047088623
+        },
+        {
+          "claim": "The bachelor’s programme covers machine learning and statistics [1].",
+          "supported": true,
+          "score": 0.6514331698417664
+        },
+        {
+          "claim": "The work at Novartis included Second Level Support [1].",
+          "supported": true,
+          "score": 0.6145339608192444
+        },
+        {
+          "claim": "There was a job at Google [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "The studies took place at ETH Zürich [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "Docker was used for twenty years [1].",
+          "supported": false,
+          "score": 0.5224520564079285
+        },
+        {
+          "claim": "Docker is not used [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "There is a doctorate in medicine [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "The project was developed for Microsoft [1].",
+          "supported": false,
+          "score": 0.0
+        },
+        {
+          "claim": "The methods include Waterfall [1].",
+          "supported": false,
+          "score": 0.0
+        }
+      ],
+      "thresholds": [
+        {
+          "threshold": 0.4,
+          "accepted_supported": 8,
+          "accepted_unsupported": 1
+        },
+        {
+          "threshold": 0.45,
+          "accepted_supported": 8,
+          "accepted_unsupported": 1
+        },
+        {
+          "threshold": 0.5,
+          "accepted_supported": 8,
+          "accepted_unsupported": 1
+        },
+        {
+          "threshold": 0.55,
+          "accepted_supported": 7,
+          "accepted_unsupported": 0
+        },
+        {
+          "threshold": 0.6,
+          "accepted_supported": 6,
+          "accepted_unsupported": 0
+        },
+        {
+          "threshold": 0.65,
+          "accepted_supported": 5,
+          "accepted_unsupported": 0
+        }
+      ]
+    }
+  }
+}

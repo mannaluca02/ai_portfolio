@@ -1,0 +1,143 @@
+{
+  "About": {
+    "section": "01 · Über mich",
+    "title": "Wer ich bin",
+    "welcome": "Willkommen auf meinem Portfolio! Hier erfahren Sie mehr über meine Erfahrungen und Projekte.",
+    "location": "Standort",
+    "role": "Rolle",
+    "availability": "Verfügbarkeit"
+  },
+  "Certificates": {
+    "section": "06 · Zertifikate",
+    "title": "Zertifizierungen",
+    "expired": "Abgelaufen",
+    "valid": "Gültig",
+    "view": "Zertifikat anzeigen",
+    "close": "Schliessen",
+    "openTab": "In neuem Tab öffnen",
+    "certificateLabel": "Zertifikat: {name}",
+    "imageError": "Bild konnte nicht geladen werden",
+    "imageHint": "Bitte den Link zum Öffnen in einem neuen Tab verwenden."
+  },
+  "Contact": {
+    "section": "07 · Kontakt",
+    "title": "Kontakt aufnehmen",
+    "details": "Kontaktinformationen",
+    "loading": "Lädt Kontaktinformationen...",
+    "phone": "Telefon",
+    "location": "Standort",
+    "availability": "Verfügbarkeit",
+    "name": "Name *",
+    "namePlaceholder": "Ihr Name",
+    "email": "Email *",
+    "emailPlaceholder": "ihre.email@beispiel.com",
+    "subject": "Betreff *",
+    "subjectPlaceholder": "Worum geht es?",
+    "message": "Nachricht *",
+    "messagePlaceholder": "Ihre Nachricht...",
+    "sending": "Wird gesendet...",
+    "send": "Nachricht senden",
+    "success": "Vielen Dank für Ihre Nachricht! Ich werde mich so schnell wie möglich bei Ihnen melden.",
+    "error": "Es gab einen Fehler beim Senden Ihrer Nachricht. Bitte versuchen Sie es später erneut."
+  },
+  "Education": {
+    "section": "04 · Ausbildung",
+    "title": "Akademischer Werdegang",
+    "ongoing": "Laufend",
+    "grade": "Note",
+    "field": "Studienrichtung",
+    "achievements": "Besondere Leistungen",
+    "years": "{count, plural, one {# Jahr} other {# Jahre}}",
+    "months": "{count, plural, one {# Monat} other {# Monate}}",
+    "degreeType": {
+      "Bachelor": "Bachelor",
+      "Master": "Master",
+      "PhD": "PhD",
+      "Diplom": "Diplom",
+      "Ausbildung": "Ausbildung",
+      "Zertifikat": "Zertifikat",
+      "Andere": "Andere"
+    }
+  },
+  "Experience": {
+    "section": "02 · Erfahrung",
+    "title": "Berufserfahrung",
+    "present": "Heute",
+    "responsibilities": "Aufgaben & Verantwortlichkeiten",
+    "technologies": "Technologien",
+    "empty": "Keine Berufserfahrung gefunden.",
+    "years": "{count, plural, one {# Jahr} other {# Jahre}}",
+    "months": "{count, plural, one {# Monat} other {# Monate}}",
+    "employment": {
+      "Vollzeit": "Vollzeit",
+      "Teilzeit": "Teilzeit",
+      "Freelance": "Freelance",
+      "Praktikum": "Praktikum",
+      "Werkstudent": "Werkstudent"
+    }
+  },
+  "Hero": {
+    "greeting": "Hi, ich bin",
+    "chat": "Chat mit meinem Portfolio-Bot",
+    "chatHint": "Frag mich alles über meine Erfahrung & Projekte",
+    "learnMore": "Mehr erfahren",
+    "contact": "Kontakt",
+    "scrollAbout": "Scroll to about section"
+  },
+  "Projects": {
+    "untilPresent": "- Heute",
+    "role": "Rolle:",
+    "teamSize": "Teamgrösse:",
+    "client": "Kunde:",
+    "technologies": "Technologien",
+    "section": "03 · Projekte",
+    "title": "Ausgewählte Projekte",
+    "all": "Alle Projekte",
+    "emptyFeatured": "Keine Featured Projekte vorhanden.",
+    "empty": "Keine Projekte gefunden.",
+    "people": "{count, plural, one {# Person} other {# Personen}}"
+  },
+  "Skills": {
+    "section": "05 · Skills",
+    "title": "Fähigkeiten & Expertise",
+    "empty": "Keine Skills gefunden.",
+    "years": "{count, plural, one {# Jahr} other {# Jahre}}"
+  },
+  "Footer": {
+    "loading": "Loading...",
+    "about": "Über mich",
+    "projects": "Projekte",
+    "experience": "Erfahrung",
+    "education": "Ausbildung",
+    "certificates": "Zertifikate",
+    "contact": "Kontakt",
+    "rights": ". Alle Rechte vorbehalten.",
+    "legal": "Impressum",
+    "privacy": "Datenschutz"
+  },
+  "Navbar": {
+    "about": "Über mich",
+    "experience": "Erfahrung",
+    "projects": "Projekte",
+    "education": "Ausbildung",
+    "certificates": "Zertifikate",
+    "contact": "Kontakt",
+    "toggleMenu": "Toggle menu"
+  },
+  "ChatbotWidget": {
+    "limit": "Dein Chat-Limit ist erreicht. Bitte versuche es später erneut.",
+    "busy": "Der Chat ist gerade ausgelastet. Bitte versuche es in Kürze erneut.",
+    "timeout": "Die Anfrage dauert zu lange. Bitte versuche es erneut.",
+    "unavailable": "Der Chat ist gerade nicht verfügbar. Bitte versuche es später erneut.",
+    "unavailableShort": "Der Chat ist gerade nicht verfügbar.",
+    "welcome": "👋 Hallo! Ich bin dein Portfolio-Assistent.",
+    "intro": "Stell mir Fragen über Lucas Berufserfahrung, Projekte, Ausbildung und Skills. Ich beantworte sie mit verifizierten Informationen aus dem Portfolio.",
+    "sources": "📚 Quellen:",
+    "details": "Details ansehen",
+    "answered": "Mit Quellen",
+    "excerpts": "Portfolio-Auszüge",
+    "noAnswer": "Keine belegte Antwort",
+    "placeholder": "Stell mir eine Frage...",
+    "invalidResponse": "Die Antwort konnte nicht geprüft werden. Bitte versuche es erneut."
+  }
+}

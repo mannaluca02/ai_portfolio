@@ -8,6 +8,7 @@ from typing import List
 from app.database import get_db
 from app.models.work_experience import WorkExperience
 from app.schemas.work import WorkExperienceResponse
+from app.services.translation_service import Language, overlay_translations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api", tags=["work"])
     summary="Get work experiences",
     description="Retrieve all work experiences ordered by start date (newest first)"
 )
-async def get_work_experiences(db: Session = Depends(get_db)) -> List[WorkExperienceResponse]:
+async def get_work_experiences(db: Session = Depends(get_db), lang: Language = 'de') -> List[WorkExperienceResponse]:
     """
     Get work experiences
 
@@ -66,7 +67,7 @@ async def get_work_experiences(db: Session = Depends(get_db)) -> List[WorkExperi
             logger.info("No work experiences found in database")
             return []
 
-        return work_experiences
+        return overlay_translations(db, 'work_experiences', work_experiences, lang)
 
     except Exception as e:
         logger.error(f"Error retrieving work experiences: {e}")

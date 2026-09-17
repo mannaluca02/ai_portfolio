@@ -1,10 +1,15 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 interface HeroProps {
   onChatClick: () => void
 }
 
 export default function Hero({ onChatClick }: HeroProps) {
+  const t = useTranslations('Hero')
+  const locale = useLocale()
+
   const currentYear = new Date().getFullYear()
 
   const scrollToSection = (sectionId: string) => {
@@ -37,7 +42,7 @@ export default function Hero({ onChatClick }: HeroProps) {
         {/* Main Heading */}
         <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight">
-            <span className="block text-text-light dark:text-text-dark">Hi, ich bin</span>
+            <span className="block text-text-light dark:text-text-dark">{t('greeting')}</span>
             <span className="block text-tekhelet mt-2">Luca Manna</span>
           </h1>
           <p className="text-xl md:text-2xl text-text-secondary-light dark:text-text-secondary-dark max-w-2xl leading-relaxed">
@@ -64,10 +69,10 @@ export default function Hero({ onChatClick }: HeroProps) {
                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
               />
             </svg>
-            Chat mit meinem Portfolio-Bot
+            {t('chat')}
           </button>
           <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">
-            Frag mich alles über meine Erfahrung & Projekte
+            {t('chatHint')}
           </p>
         </div>
 
@@ -78,14 +83,14 @@ export default function Hero({ onChatClick }: HeroProps) {
             onClick={(e) => handleLinkClick(e, '#about')}
             className="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors underline underline-offset-4 decoration-1 cursor-pointer"
           >
-            Mehr erfahren
+            {t('learnMore')}
           </a>
           <a
             href="#contact"
             onClick={(e) => handleLinkClick(e, '#contact')}
             className="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark transition-colors underline underline-offset-4 decoration-1 cursor-pointer"
           >
-            Kontakt
+            {t('contact')}
           </a>
         </div>
       </div>
@@ -94,7 +99,7 @@ export default function Hero({ onChatClick }: HeroProps) {
       <button
         onClick={() => scrollToSection('about')}
         className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer hover:opacity-70 transition-opacity"
-        aria-label="Scroll to about section"
+        aria-label={t('scrollAbout')}
       >
         <svg
           className="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark"

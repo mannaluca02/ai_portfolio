@@ -1,18 +1,22 @@
+import {NextIntlClientProvider, hasLocale} from 'next-intl'
+import {getMessages, setRequestLocale} from 'next-intl/server'
+import {notFound} from 'next/navigation'
+import {routing} from '@/i18n/routing'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
+import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import SmoothScroll from '@/components/SmoothScroll'
 import StructuredData from '@/components/StructuredData'
-import { Providers } from './providers'
+import { Providers } from '../providers'
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
 })
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   metadataBase: new URL('https://lucamanna.ch'),
   title: {
     default: 'Luca Manna - Data Scientist & ML Engineer | Basel',
@@ -90,23 +94,40 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
+export function generateStaticParams() { return routing.locales.map(locale => ({locale})) }
+
+export function generateMetadata({params: {locale}}: {params: {locale: string}}): Metadata {
+  const description = locale === 'en'
+    ? 'Luca Manna - Data Science student (BSc) & ML Engineer based in Basel. Specialising in Machine Learning, Python, React and web development.'
+    : baseMetadata.description!
+  return {...baseMetadata, description,
+    keywords: locale === 'en' ? ['Luca Manna', 'Data Scientist Basel', 'Machine Learning', 'Python', 'Switzerland', 'Portfolio'] : baseMetadata.keywords,
+    alternates: {canonical: '/' + locale},
+    openGraph: {...baseMetadata.openGraph, description, url: '/' + locale, locale: locale === 'en' ? 'en_GB' : 'de_CH', alternateLocale: locale === 'en' ? ['de_CH'] : ['en_GB']},
+    twitter: {...baseMetadata.twitter, description},
+  }
+}
+
+export default async function RootLayout({children, params: {locale}}: {
+  children: React.ReactNode; params: {locale: string}
 }) {
+  if (!hasLocale(routing.locales, locale)) notFound()
+  setRequestLocale(locale)
+  const messages = await getMessages()
   return (
-    <html lang="de" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <StructuredData />
       </head>
       <body className={inter.className}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
         <Providers>
           <SmoothScroll />
           <Navbar />
           <main>{children}</main>
           <Footer />
         </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

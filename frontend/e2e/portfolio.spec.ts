@@ -9,11 +9,11 @@ const projects = Array.from({ length: 18 }, (_, i) => ({
 test.beforeEach(async ({ page }) => {
   // Only synthetic portfolio content; no production database or LLM calls.
   await page.route('**/api/**', route => route.fulfill({ json:
-    route.request().url().endsWith('/api/projects') ? projects : [] }))
+    new URL(route.request().url()).pathname === '/api/projects' ? projects : [] }))
 })
 
 test('featured height is independent of the hidden all-projects list', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/de')
   const section = page.locator('#projects')
   await expect(section.locator('[data-project-id]')).toHaveCount(2)
   const initialHeight = (await section.boundingBox())!.height
@@ -27,7 +27,7 @@ test('featured height is independent of the hidden all-projects list', async ({ 
 })
 
 test('accordions and citation links still work after tab changes', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/de')
   const section = page.locator('#projects')
   await expect(section.locator('[data-project-id]')).toHaveCount(2)
   await section.getByRole('heading', { name: 'Fixture project 1', exact: true }).click()
@@ -45,8 +45,8 @@ test('accordions and citation links still work after tab changes', async ({ page
 
 test('empty featured panel and reduced motion have no hidden project footprint', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.route('**/api/projects', route => route.fulfill({ json: projects.map(project => ({ ...project, featured: false })) }))
-  await page.goto('/')
+  await page.route('**/api/projects?*', route => route.fulfill({ json: projects.map(project => ({ ...project, featured: false })) }))
+  await page.goto('/de')
   const section = page.locator('#projects')
   await expect(section.getByText('Keine Featured Projekte vorhanden.')).toBeVisible()
   await expect(section.locator('[data-project-id]')).toHaveCount(0)

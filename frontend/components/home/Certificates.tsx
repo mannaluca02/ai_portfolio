@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState, useRef } from 'react'
 import FadeInSection from '@/components/ui/FadeInSection'
 
@@ -18,6 +20,9 @@ interface Certificate {
 }
 
 export default function Certificates() {
+  const t = useTranslations('Certificates')
+  const locale = useLocale()
+
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -29,7 +34,7 @@ export default function Certificates() {
   useEffect(() => {
     const fetchCertificates = async () => {
       try {
-        const response = await fetch('/api/certificates')
+        const response = await fetch(`/api/certificates?lang=${locale}`)
         if (response.ok) {
           const data = await response.json()
           if (Array.isArray(data)) {
@@ -44,7 +49,7 @@ export default function Certificates() {
     }
 
     fetchCertificates()
-  }, [])
+  }, [locale])
 
   // ESC key handler to close modal
   useEffect(() => {
@@ -107,7 +112,7 @@ export default function Certificates() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+    return date.toLocaleDateString(locale === 'de' ? 'de-CH' : 'en-GB', { month: 'short', year: 'numeric' })
   }
 
   const isExpired = (expirationDate?: string) => {
@@ -143,14 +148,14 @@ export default function Certificates() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            06 — Zertifikate
+            {t('section')}
           </span>
         </FadeInSection>
 
         {/* Section Title */}
         <FadeInSection delay={100}>
           <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-            Zertifizierungen
+            {t('title')}
           </h2>
         </FadeInSection>
 
@@ -184,7 +189,7 @@ export default function Certificates() {
                               ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                               : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                           }`}>
-                            {expired ? 'Abgelaufen' : 'Gültig'}
+                            {expired ? t('expired') : t('valid')}
                           </span>
                         )}
                       </div>
@@ -244,7 +249,7 @@ export default function Certificates() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          Zertifikat anzeigen
+                          {t('view')}
                         </button>
                       )}
                     </div>
@@ -275,7 +280,7 @@ export default function Certificates() {
               <button
                 onClick={() => setViewingCertificate(null)}
                 className="absolute top-4 right-4 z-10 p-2 rounded-full bg-cream dark:bg-dark-bg hover:bg-cream-dark dark:hover:bg-dark-bg-secondary transition-colors shadow-lg"
-                aria-label="Schließen"
+                aria-label={t('close')}
               >
                 <svg className="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -310,14 +315,14 @@ export default function Certificates() {
                       <iframe
                         src={`${viewingCertificate.certificate_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                         className="w-full h-full min-h-[600px] rounded-lg shadow-lg border-0"
-                        title={`Zertifikat: ${viewingCertificate.name}`}
+                        title={t('certificateLabel', {name: viewingCertificate.name})}
                         style={{ border: 'none' }}
                       />
                     ) : (
                       // Image Viewer
                       <img
                         src={viewingCertificate.certificate_url}
-                        alt={`Zertifikat: ${viewingCertificate.name}`}
+                        alt={t('certificateLabel', {name: viewingCertificate.name})}
                         className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                         onError={(e) => {
                           console.error('Failed to load certificate image:', viewingCertificate.certificate_url)
@@ -329,8 +334,8 @@ export default function Certificates() {
                             <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
-                            <p class="text-lg font-medium mb-2">Bild konnte nicht geladen werden</p>
-                            <p class="text-sm">Bitte verwenden Sie "In neuem Tab öffnen"</p>
+                            <p class="text-lg font-medium mb-2">${t('imageError')}</p>
+                            <p class="text-sm">${t('imageHint')}</p>
                           `
                           e.currentTarget.parentElement?.appendChild(errorDiv)
                         }}
@@ -351,7 +356,7 @@ export default function Certificates() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
-                      In neuem Tab öffnen
+                      {t('openTab')}
                     </a>
                   </div>
                 </div>
@@ -378,7 +383,7 @@ export default function Certificates() {
               <button
                 onClick={() => setViewingCertificate(null)}
                 className="absolute top-4 right-4 z-10 p-2 rounded-full bg-cream dark:bg-dark-bg hover:bg-cream-dark dark:hover:bg-dark-bg-secondary transition-colors shadow-lg"
-                aria-label="Schließen"
+                aria-label={t('close')}
               >
                 <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -408,14 +413,14 @@ export default function Certificates() {
                     <iframe
                       src={`${viewingCertificate.certificate_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                       className="w-full h-full min-h-[400px] rounded-lg shadow-lg border-0"
-                      title={`Zertifikat: ${viewingCertificate.name}`}
+                      title={t('certificateLabel', {name: viewingCertificate.name})}
                       style={{ border: 'none' }}
                     />
                   ) : (
                     // Image Viewer
                     <img
                       src={viewingCertificate.certificate_url}
-                      alt={`Zertifikat: ${viewingCertificate.name}`}
+                      alt={t('certificateLabel', {name: viewingCertificate.name})}
                       className="w-full rounded-lg shadow-lg"
                       onError={(e) => {
                         console.error('Failed to load certificate image:', viewingCertificate.certificate_url)
@@ -426,8 +431,8 @@ export default function Certificates() {
                           <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                           </svg>
-                          <p class="font-medium mb-1">Bild konnte nicht geladen werden</p>
-                          <p class="text-sm">Bitte "In neuem Tab öffnen" verwenden</p>
+                          <p class="font-medium mb-1">${t('imageError')}</p>
+                          <p class="text-sm">${t('imageHint')}</p>
                         `
                         e.currentTarget.parentElement?.appendChild(errorDiv)
                       }}
@@ -443,7 +448,7 @@ export default function Certificates() {
                     rel="noopener noreferrer"
                     className="block w-full text-center py-3 bg-tekhelet text-white rounded-lg hover:bg-tekhelet/90 transition-colors font-medium"
                   >
-                    In neuem Tab öffnen
+                    {t('openTab')}
                   </a>
                 </div>
               </div>

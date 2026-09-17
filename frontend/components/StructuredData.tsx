@@ -1,11 +1,14 @@
-export default function StructuredData() {
+import {getLocale} from 'next-intl/server'
+
+export default async function StructuredData() {
+  const locale = await getLocale()
   const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: 'Luca Manna',
     jobTitle: 'Data Scientist & ML Engineer',
-    description: 'Data Science Student (BSc) an der FHNW. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen.',
-    url: 'https://lucamanna.ch',
+    description: locale === 'en' ? 'Data Science student (BSc) at FHNW. Specialising in Machine Learning, Python, React and web development.' : 'Data Science Student (BSc) an der FHNW. Spezialisiert auf Machine Learning, Python, React und innovative Weblösungen.',
+    url: `https://lucamanna.ch/${locale}`,
     email: 'mannaluca02@gmail.com',
     telephone: '+41762047441',
     address: {
@@ -38,13 +41,13 @@ export default function StructuredData() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Luca Manna Portfolio',
-    url: 'https://lucamanna.ch',
-    description: 'Portfolio von Luca Manna - Data Scientist & ML Engineer aus Basel',
+    url: `https://lucamanna.ch/${locale}`,
+    description: locale === 'en' ? 'Portfolio of Luca Manna - Data Scientist & ML Engineer based in Basel' : 'Portfolio von Luca Manna - Data Scientist & ML Engineer aus Basel',
     author: {
       '@type': 'Person',
       name: 'Luca Manna'
     },
-    inLanguage: 'de-CH'
+    inLanguage: locale === 'en' ? 'en-GB' : 'de-CH'
   }
 
   const profilePageSchema = {

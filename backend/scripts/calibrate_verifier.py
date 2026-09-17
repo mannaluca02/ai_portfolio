@@ -7,6 +7,7 @@ question and must not silently change the calibration.
 
     python backend/scripts/calibrate_verifier.py
 """
+import argparse
 import logging
 import os
 import sys
@@ -38,10 +39,30 @@ CASES = [
     ("projects", "project-postfinance-horizons", "Das Projekt wurde für Microsoft entwickelt [1].", False),
     ("skills", "skill-agile", "Zu den Methoden gehört Waterfall [1].", False),
 ]
+ENGLISH_CLAIMS = [
+    "Java is a secondary backend language [1].",
+    "The methods include Scrum and Kanban [1].",
+    "Docker is used for containerisation [1].",
+    "The project was created at a hackathon [1].",
+    "Fundyour.club allows clubs to collect donations [1].",
+    "The platform uses an MVC backend in PHP [1].",
+    "The bachelor’s programme covers machine learning and statistics [1].",
+    "The work at Novartis included Second Level Support [1].",
+    "There was a job at Google [1].",
+    "The studies took place at ETH Zürich [1].",
+    "Docker was used for twenty years [1].",
+    "Docker is not used [1].",
+    "There is a doctorate in medicine [1].",
+    "The project was developed for Microsoft [1].",
+    "The methods include Waterfall [1]."
+]
 THRESHOLDS = (0.40, 0.45, 0.50, 0.55, 0.60, 0.65)
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--language", choices=["de", "en"], default="de")
+    args = parser.parse_args()
     logging.disable(logging.INFO)
     verifier = get_verifier_service()
     scored = []
@@ -56,7 +77,9 @@ def main() -> int:
             "education": retriever._format_education,
             "work_experiences": retriever._format_work_experience,
         }
-        for table, slug, claim, supported in CASES:
+        for index, (table, slug, claim, supported) in enumerate(CASES):
+            if args.language == "en":
+                claim = ENGLISH_CLAIMS[index]
             row = db.execute(text(f"SELECT *, 1.0 as similarity FROM {table} WHERE slug = :slug"),
                              {"slug": slug}).fetchone()
             if row is None:
@@ -64,7 +87,7 @@ def main() -> int:
                 continue
             source = formatters[table](row, table)
             source.document = document_from_record(table, row)
-            detail = verifier.verify_response(claim, [source], threshold=0.0).details[0]
+            detail = verifier.verify_response(claim, [source], threshold=0.0, language=args.language).details[0]
             # A structural rejection scores zero; that is a decision, not a score.
             scored.append((supported, 0.0 if "error" in detail else detail["similarity"], claim))
     finally:

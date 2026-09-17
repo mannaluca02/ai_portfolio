@@ -12,17 +12,13 @@ export interface DisplayAnswer {
   sources: ChatSource[]
 }
 
-const unavailable = (): DisplayAnswer => ({
-  content: 'Die Antwort konnte nicht geprüft werden. Bitte versuche es erneut.',
-  outcome: 'no_information', sources: [],
-})
-
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
 /** Backend outcomes are authoritative; similarity never overrides failed checks. */
-export function parseChatResponse(data: unknown): DisplayAnswer {
+export function parseChatResponse(data: unknown, unavailableMessage = 'Die Antwort konnte nicht geprüft werden. Bitte versuche es erneut.'): DisplayAnswer {
+  const unavailable = (): DisplayAnswer => ({content: unavailableMessage, outcome: 'no_information', sources: []})
   if (!record(data) || typeof data.answer !== 'string' || !data.answer.trim()) return unavailable()
   if (data.outcome === 'no_information') return { content: data.answer, outcome: 'no_information', sources: [] }
   if (data.outcome !== 'answered' && data.outcome !== 'source_fallback') return unavailable()

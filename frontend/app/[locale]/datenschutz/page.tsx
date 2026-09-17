@@ -1,7 +1,10 @@
+import {redirect} from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
+  alternates: {canonical: '/de/datenschutz', languages: {}},
+  openGraph: {url: '/de/datenschutz', locale: 'de_CH', alternateLocale: []},
   title: 'Datenschutzerklärung',
   description: 'Datenschutzerklärung und Informationen zur Datenverarbeitung auf lucamanna.ch',
   robots: {
@@ -10,14 +13,15 @@ export const metadata: Metadata = {
   },
 }
 
-export default function DatenschutzPage() {
+export default function DatenschutzPage({params}: {params: {locale: string}}) {
+  if (params.locale !== 'de') redirect('/de/datenschutz')
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark py-20">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         {/* Header */}
         <div className="mb-12">
           <Link
-            href="/"
+            href="/de"
             className="inline-flex items-center text-tekhelet hover:text-tekhelet/80 transition-colors mb-6"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

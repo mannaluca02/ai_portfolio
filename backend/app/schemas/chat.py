@@ -16,6 +16,7 @@ class ChatMode(str, Enum):
 
 class ChatRequest(BaseModel):
     """Chat request schema"""
+    language: Literal["de", "en"] = "de"
     message: str = Field(..., min_length=1, max_length=1000, description="User's question")
     mode: ChatMode = Field(default=ChatMode.NATURAL, description="Chat mode (listen or natural)")
     session_id: str | None = Field(None, description="Optional session ID for conversation tracking")

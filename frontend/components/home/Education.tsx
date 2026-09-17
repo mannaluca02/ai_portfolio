@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import FadeInSection from '@/components/ui/FadeInSection'
 
@@ -22,6 +24,9 @@ interface EducationRecord {
 }
 
 export default function Education() {
+  const t = useTranslations('Education')
+  const locale = useLocale()
+
   const [education, setEducation] = useState<EducationRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -29,7 +34,7 @@ export default function Education() {
   useEffect(() => {
     const fetchEducation = async () => {
       try {
-        const response = await fetch('/api/education')
+        const response = await fetch(`/api/education?lang=${locale}`)
         if (response.ok) {
           const data = await response.json()
           if (Array.isArray(data)) {
@@ -44,7 +49,7 @@ export default function Education() {
     }
 
     fetchEducation()
-  }, [])
+  }, [locale])
 
   // Handle accordion opening from chatbot links
   useEffect(() => {
@@ -79,7 +84,7 @@ export default function Education() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+    return date.toLocaleDateString(locale === 'de' ? 'de-CH' : 'en-GB', { month: 'short', year: 'numeric' })
   }
 
   const calculateDuration = (start: string, end?: string) => {
@@ -91,11 +96,11 @@ export default function Education() {
     const remainingMonths = months % 12
 
     if (years > 0 && remainingMonths > 0) {
-      return `${years} Jahr${years > 1 ? 'e' : ''}, ${remainingMonths} Monat${remainingMonths > 1 ? 'e' : ''}`
+      return `${t('years', {count: years})}, ${t('months', {count: remainingMonths})}`
     } else if (years > 0) {
-      return `${years} Jahr${years > 1 ? 'e' : ''}`
+      return t('years', {count: years})
     } else {
-      return `${remainingMonths} Monat${remainingMonths > 1 ? 'e' : ''}`
+      return t('months', {count: remainingMonths})
     }
   }
 
@@ -127,14 +132,14 @@ export default function Education() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            04 — Ausbildung
+            {t('section')}
           </span>
         </FadeInSection>
 
         {/* Section Title */}
         <FadeInSection delay={100}>
           <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-            Akademischer Werdegang
+            {t('title')}
           </h2>
         </FadeInSection>
 
@@ -158,7 +163,7 @@ export default function Education() {
                       <div className="flex flex-wrap items-center gap-3 text-text-secondary-light dark:text-text-secondary-dark">
                         <span className="font-medium">{edu.institution}</span>
                         <span className="text-sm">
-                          {formatDate(edu.start_date)} - {edu.end_date ? formatDate(edu.end_date) : 'Laufend'}
+                          {formatDate(edu.start_date)} - {edu.end_date ? formatDate(edu.end_date) : t('ongoing')}
                         </span>
                       </div>
                     </div>
@@ -200,14 +205,14 @@ export default function Education() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
-                          {edu.degree_type}
+                          {t.has(`degreeType.${edu.degree_type}`) ? t(`degreeType.${edu.degree_type}`) : edu.degree_type}
                         </span>
                         {edu.grade && (
                           <span className="flex items-center gap-1.5">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                             </svg>
-                            Note {edu.grade}
+                            {t('grade')} {edu.grade}
                           </span>
                         )}
                         <span className="flex items-center gap-1.5">
@@ -222,7 +227,7 @@ export default function Education() {
                       {edu.field_of_study && (
                         <div>
                           <h4 className="text-sm font-semibold text-text-light dark:text-text-dark mb-3 uppercase tracking-wider">
-                            Studienrichtung
+                            {t('field')}
                           </h4>
                           <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark leading-relaxed">
                             {edu.field_of_study}
@@ -241,7 +246,7 @@ export default function Education() {
                       {edu.achievements && edu.achievements.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-text-light dark:text-text-dark mb-3 uppercase tracking-wider">
-                            Besondere Leistungen
+                            {t('achievements')}
                           </h4>
                           <ul className="space-y-2">
                             {edu.achievements.map((achievement, idx) => (

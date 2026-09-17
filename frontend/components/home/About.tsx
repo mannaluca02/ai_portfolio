@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import FadeInSection from '@/components/ui/FadeInSection'
 
@@ -16,13 +18,16 @@ interface ContactInfo {
 }
 
 export default function About() {
+  const t = useTranslations('About')
+  const locale = useLocale()
+
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchContactInfo = async () => {
       try {
-        const response = await fetch('/api/contact-info')
+        const response = await fetch(`/api/contact-info?lang=${locale}`)
         if (response.ok) {
           const data = await response.json()
           setContactInfo(data)
@@ -35,7 +40,7 @@ export default function About() {
     }
 
     fetchContactInfo()
-  }, [])
+  }, [locale])
 
   if (loading) {
     return (
@@ -57,7 +62,7 @@ export default function About() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            01 — Über mich
+            {t('section')}
           </span>
         </FadeInSection>
 
@@ -67,7 +72,7 @@ export default function About() {
           <div className="md:col-span-3 space-y-8">
             <FadeInSection delay={100}>
               <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-                Wer ich bin
+                {t('title')}
               </h2>
             </FadeInSection>
 
@@ -79,7 +84,7 @@ export default function About() {
                   </p>
                 ) : (
                   <p className="text-xl md:text-2xl text-text-secondary-light dark:text-text-secondary-dark leading-relaxed">
-                    Willkommen auf meinem Portfolio! Hier erfahren Sie mehr über meine Erfahrungen und Projekte.
+                    {t('welcome')}
                   </p>
                 )}
               </div>
@@ -92,7 +97,7 @@ export default function About() {
                   {contactInfo.city && contactInfo.country && (
                     <div className="space-y-2">
                       <div className="text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark">
-                        Standort
+                        {t('location')}
                       </div>
                       <div className="text-lg text-text-light dark:text-text-dark">
                         {contactInfo.city}, {contactInfo.country}
@@ -103,7 +108,7 @@ export default function About() {
                   {contactInfo.title && (
                     <div className="space-y-2">
                       <div className="text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark">
-                        Rolle
+                        {t('role')}
                       </div>
                       <div className="text-lg text-text-light dark:text-text-dark">
                         {contactInfo.title}
@@ -114,7 +119,7 @@ export default function About() {
                   {contactInfo.availability && (
                     <div className="space-y-2 sm:col-span-2">
                       <div className="text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark">
-                        Verfügbarkeit
+                        {t('availability')}
                       </div>
                       <div className="text-lg text-text-light dark:text-text-dark">
                         {contactInfo.availability}

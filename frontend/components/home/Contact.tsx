@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import FadeInSection from '../ui/FadeInSection'
 
@@ -14,6 +16,9 @@ interface ContactInfo {
 }
 
 export default function Contact() {
+  const t = useTranslations('Contact')
+  const locale = useLocale()
+
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -26,14 +31,14 @@ export default function Contact() {
 
   useEffect(() => {
     // Fetch contact info
-    fetch('/api/contact-info')
+    fetch(`/api/contact-info?lang=${locale}`)
       .then(res => res.json())
       .then(data => {
         console.log('Contact Info loaded:', data)
         setContactInfo(data)
       })
       .catch(err => console.error('Error fetching contact info:', err))
-  }, [])
+  }, [locale])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -82,14 +87,14 @@ export default function Contact() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            07 — Kontakt
+            {t('section')}
           </span>
         </FadeInSection>
 
         {/* Section Title */}
         <FadeInSection delay={100}>
           <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-            Kontakt aufnehmen
+            {t('title')}
           </h2>
         </FadeInSection>
 
@@ -100,12 +105,12 @@ export default function Contact() {
             <div className="space-y-8">
               <div>
                 <h3 className="text-xl font-semibold text-text-light dark:text-text-dark mb-6">
-                  Kontaktinformationen
+                  {t('details')}
                 </h3>
 
                 {!contactInfo ? (
                   <p className="text-text-secondary-light dark:text-text-secondary-dark">
-                    Lädt Kontaktinformationen...
+                    {t('loading')}
                   </p>
                 ) : (
                   <div className="space-y-6 text-text-secondary-light dark:text-text-secondary-dark">
@@ -123,7 +128,7 @@ export default function Contact() {
 
                     {contactInfo.phone && (
                       <div>
-                        <p className="text-sm uppercase tracking-wider mb-1">Telefon</p>
+                        <p className="text-sm uppercase tracking-wider mb-1">{t('phone')}</p>
                         <a
                           href={`tel:${contactInfo.phone}`}
                           className="text-lg text-text-light dark:text-text-dark hover:text-tekhelet transition-colors"
@@ -135,7 +140,7 @@ export default function Contact() {
 
                     {(contactInfo.city || contactInfo.country) && (
                       <div>
-                        <p className="text-sm uppercase tracking-wider mb-1">Standort</p>
+                        <p className="text-sm uppercase tracking-wider mb-1">{t('location')}</p>
                         <p className="text-lg text-text-light dark:text-text-dark">
                           {[contactInfo.city, contactInfo.country].filter(Boolean).join(', ')}
                         </p>
@@ -144,7 +149,7 @@ export default function Contact() {
 
                     {contactInfo.availability && (
                       <div>
-                        <p className="text-sm uppercase tracking-wider mb-1">Verfügbarkeit</p>
+                        <p className="text-sm uppercase tracking-wider mb-1">{t('availability')}</p>
                         <p className="text-lg text-text-light dark:text-text-dark">
                           {contactInfo.availability}
                         </p>
@@ -161,7 +166,7 @@ export default function Contact() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark mb-2">
-                  Name *
+                  {t('name')}
                 </label>
                 <input
                   type="text"
@@ -171,13 +176,13 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   className="w-full px-0 py-3 bg-transparent border-b border-gray-300 dark:border-gray-700 text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-tekhelet transition-colors"
-                  placeholder="Ihr Name"
+                  placeholder={t('namePlaceholder')}
                 />
               </div>
 
               <div>
                 <label htmlFor="email" className="block text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark mb-2">
-                  Email *
+                  {t('email')}
                 </label>
                 <input
                   type="email"
@@ -187,13 +192,13 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   className="w-full px-0 py-3 bg-transparent border-b border-gray-300 dark:border-gray-700 text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-tekhelet transition-colors"
-                  placeholder="ihre.email@beispiel.com"
+                  placeholder={t('emailPlaceholder')}
                 />
               </div>
 
               <div>
                 <label htmlFor="subject" className="block text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark mb-2">
-                  Betreff *
+                  {t('subject')}
                 </label>
                 <input
                   type="text"
@@ -203,13 +208,13 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   className="w-full px-0 py-3 bg-transparent border-b border-gray-300 dark:border-gray-700 text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-tekhelet transition-colors"
-                  placeholder="Worum geht es?"
+                  placeholder={t('subjectPlaceholder')}
                 />
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark mb-2">
-                  Nachricht *
+                  {t('message')}
                 </label>
                 <textarea
                   id="message"
@@ -219,7 +224,7 @@ export default function Contact() {
                   required
                   rows={6}
                   className="w-full px-0 py-3 bg-transparent border-b border-gray-300 dark:border-gray-700 text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-tekhelet transition-colors resize-none"
-                  placeholder="Ihre Nachricht..."
+                  placeholder={t('messagePlaceholder')}
                 />
               </div>
 
@@ -228,18 +233,18 @@ export default function Contact() {
                 disabled={isSubmitting}
                 className="w-full px-8 py-4 bg-tekhelet text-cream rounded-xl hover:opacity-90 transition-all duration-300 font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Wird gesendet...' : 'Nachricht senden'}
+                {isSubmitting ? t('sending') : t('send')}
               </button>
 
               {submitStatus === 'success' && (
                 <div className="pt-4 text-sm text-green-600 dark:text-green-400">
-                  Vielen Dank für Ihre Nachricht! Ich werde mich so schnell wie möglich bei Ihnen melden.
+                  {t('success')}
                 </div>
               )}
 
               {submitStatus === 'error' && (
                 <div className="pt-4 text-sm text-red-600 dark:text-red-400">
-                  Es gab einen Fehler beim Senden Ihrer Nachricht. Bitte versuchen Sie es später erneut.
+                  {t('error')}
                 </div>
               )}
             </form>

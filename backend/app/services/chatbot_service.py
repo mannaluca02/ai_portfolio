@@ -38,6 +38,8 @@ EXCERPT_FLOOR = 0.40
 EXCERPT_GAP = 0.03
 EXCERPT_LIMIT = 2
 EXCERPT_CHARS = 170
+NO_INFORMATION_EN = "I cannot find that information in my portfolio data."
+UNVERIFIED_INTRO_EN = "I do not have a verified answer. These are the closest portfolio excerpts (in German):"
 
 
 class ChatbotService:
@@ -46,18 +48,18 @@ class ChatbotService:
         self.generator = get_generator_service()
         self.verifier = get_verifier_service()
 
-    def process_message(self, message: str, mode: ChatMode = ChatMode.NATURAL) -> ChatResponse:
+    def process_message(self, message: str, mode: ChatMode = ChatMode.NATURAL, *, language: str = "de") -> ChatResponse:
         start = perf_counter()
         timings = {"retrieval": 0, "generation": 0, "verification": 0}
         results = self._retrieve_documents(message, mode)
         timings["retrieval"] = round((perf_counter() - start) * 1000)
         if not results:
-            response = self._no_information(mode)
+            response = self._no_information(mode, language)
         elif mode == ChatMode.LISTEN or settings.SKIP_VERIFICATION:
             # The legacy performance setting now selects safe excerpts.
-            response = self._source_fallback(results, mode)
+            response = self._source_fallback(results, mode, language)
         else:
-            response = self._natural_response(message, results, timings)
+            response = self._natural_response(message, results, timings, language)
         response.metadata = {**(response.metadata or {}), "timings_ms": timings,
                              "processing_time_ms": round((perf_counter() - start) * 1000)}
         logger.info("Chat outcome=%s timings_ms=%s", response.outcome, timings)
@@ -75,58 +77,58 @@ class ChatbotService:
         top = max(result.similarity for result in results)
         return [result for result in results if top - result.similarity <= 0.25]
 
-    def _natural_response(self, message, results, timings):
+    def _natural_response(self, message, results, timings, language="de"):
         started = perf_counter()
         try:
-            generated = self.generator.generate_response(message, results)
+            generated = self.generator.generate_response(message, results, **({"language": language} if language != "de" else {}))
         except Exception:
             logger.warning("Generation unavailable; using source excerpts", exc_info=True)
-            return self._source_fallback(results, ChatMode.NATURAL)
+            return self._source_fallback(results, ChatMode.NATURAL, language)
         finally:
             timings["generation"] = round((perf_counter() - started) * 1000)
 
         answer = generated.get("answer", "").strip()
         if not answer or generated.get("finish_reason") != "stop":
-            return self._source_fallback(results, ChatMode.NATURAL)
-        if answer == NO_INFORMATION:
-            return self._no_information(ChatMode.NATURAL)
+            return self._source_fallback(results, ChatMode.NATURAL, language)
+        if answer == (NO_INFORMATION_EN if language == "en" else NO_INFORMATION):
+            return self._no_information(ChatMode.NATURAL, language)
 
         started = perf_counter()
         try:
-            checked = self.verifier.verify_response(answer, results)
+            checked = self.verifier.verify_response(answer, results, **({"language": language, "threshold": settings.VERIFICATION_THRESHOLD_EN} if language == "en" else {}))
         except Exception:
             logger.warning("Verification unavailable; using source excerpts", exc_info=True)
-            return self._source_fallback(results, ChatMode.NATURAL)
+            return self._source_fallback(results, ChatMode.NATURAL, language)
         finally:
             timings["verification"] = round((perf_counter() - started) * 1000)
         if not checked.is_verified:
-            return self._source_fallback(results, ChatMode.NATURAL)
+            return self._source_fallback(results, ChatMode.NATURAL, language)
 
         cited = {int(n) for n in re.findall(r"\[(\d+)\]", answer)}
         return ChatResponse(answer=answer, outcome="answered", mode=ChatMode.NATURAL,
                             sources=[s for s in self._sources(results) if s.index in cited],
                             confidence=checked.confidence,
                             verification=VerificationResult(is_verified=True, confidence=checked.confidence,
-                                                            threshold=settings.VERIFICATION_THRESHOLD),
+                                                            threshold=settings.VERIFICATION_THRESHOLD_EN if language == "en" else settings.VERIFICATION_THRESHOLD),
                             metadata={"model": generated.get("model"), "tokens_used": generated.get("tokens_used"),
                                       "results_count": len(results)})
 
-    def _source_fallback(self, results, mode):
+    def _source_fallback(self, results, mode, language="de"):
         # Related entries are never presented as confirmation of the question's premise.
-        relevant = self._excerpt_candidates(results)
+        relevant = self._excerpt_candidates(results, language)
         if not relevant:
-            return self._no_information(mode)
+            return self._no_information(mode, language)
         excerpts = []
         for index, result in enumerate(relevant, 1):
             summary = first_sentence(result.content or "", max_chars=EXCERPT_CHARS)
             excerpts.append(f"• {result.title}: {summary} [{index}]" if summary
                             else f"• {result.title} [{index}]")
-        return ChatResponse(answer=f"{UNVERIFIED_INTRO}\n" + "\n".join(excerpts),
+        return ChatResponse(answer=f"{UNVERIFIED_INTRO_EN if language == 'en' else UNVERIFIED_INTRO}\n" + "\n".join(excerpts),
                             outcome="source_fallback", sources=self._sources(relevant), mode=mode,
                             confidence=0.0, verification=None, metadata={"results_count": len(results)})
 
     @staticmethod
-    def _excerpt_candidates(results):
+    def _excerpt_candidates(results, language="de"):
         """The few rows worth quoting: strong enough, close to the best one, and
         from the same section, so a job is never listed beside a hobby.
 
@@ -141,13 +143,13 @@ class ChatbotService:
             return []
         best = ranked[0]
         return [result for result in ranked
-                if result.similarity >= EXCERPT_FLOOR
-                and best.similarity - result.similarity <= EXCERPT_GAP
+                if result.similarity >= (settings.EXCERPT_FLOOR_EN if language == "en" else EXCERPT_FLOOR)
+                and best.similarity - result.similarity <= (settings.EXCERPT_GAP_EN if language == "en" else EXCERPT_GAP)
                 and result.table == best.table][:EXCERPT_LIMIT]
 
     @staticmethod
-    def _no_information(mode):
-        return ChatResponse(answer=NO_INFORMATION, outcome="no_information", sources=[], mode=mode,
+    def _no_information(mode, language="de"):
+        return ChatResponse(answer=NO_INFORMATION_EN if language == "en" else NO_INFORMATION, outcome="no_information", sources=[], mode=mode,
                             confidence=0.0, verification=None, metadata={"results_count": 0})
 
     @staticmethod

@@ -1,4 +1,7 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {NextIntlClientProvider} from 'next-intl'
+import messages from '../messages/de.json'
+import type {ReactElement} from 'react'
+import { act, fireEvent, render as baseRender, screen, waitFor } from '@testing-library/react'
 import { createRef } from 'react'
 import { expect, it, vi } from 'vitest'
 import ChatbotWidget, { ChatbotWidgetRef } from '@/components/chatbot/ChatbotWidget'
@@ -58,3 +61,5 @@ it('reports a refused request without leaving a half-written message behind', as
   await ask()
   expect(screen.getByText(/Chat-Limit/)).toBeTruthy()
 })
+
+function render(element: ReactElement) { return baseRender(<NextIntlClientProvider locale="de" messages={messages}>{element}</NextIntlClientProvider>) }

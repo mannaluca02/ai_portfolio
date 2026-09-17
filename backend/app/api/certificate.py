@@ -8,6 +8,7 @@ from typing import List
 from app.database import get_db
 from app.models.certificate import Certificate
 from app.schemas.certificate import CertificateResponse
+from app.services.translation_service import Language, overlay_translations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api", tags=["certificates"])
     summary="Get certificates",
     description="Retrieve all certificates ordered by issue date (newest first)"
 )
-async def get_certificates(db: Session = Depends(get_db)) -> List[CertificateResponse]:
+async def get_certificates(db: Session = Depends(get_db), lang: Language = 'de') -> List[CertificateResponse]:
     """
     Get certificates
 
@@ -58,7 +59,7 @@ async def get_certificates(db: Session = Depends(get_db)) -> List[CertificateRes
             logger.info("No certificates found in database")
             return []
 
-        return certificates
+        return overlay_translations(db, 'certificates', certificates, lang)
 
     except Exception as e:
         logger.error(f"Error retrieving certificates: {e}")

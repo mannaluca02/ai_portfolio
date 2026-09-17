@@ -8,6 +8,7 @@ from typing import List
 from app.database import get_db
 from app.models.skill import Skill
 from app.schemas.skill import SkillResponse
+from app.services.translation_service import Language, overlay_translations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api", tags=["skills"])
     summary="Get skills",
     description="Retrieve all skills grouped by category and ordered by skill level"
 )
-async def get_skills(db: Session = Depends(get_db)) -> List[SkillResponse]:
+async def get_skills(db: Session = Depends(get_db), lang: Language = 'de') -> List[SkillResponse]:
     """
     Get skills
 
@@ -70,7 +71,7 @@ async def get_skills(db: Session = Depends(get_db)) -> List[SkillResponse]:
             key=lambda s: (s.category, -skill_level_order.get(s.skill_level, 0))
         )
 
-        return sorted_skills
+        return overlay_translations(db, 'skills', sorted_skills, lang)
 
     except Exception as e:
         logger.error(f"Error retrieving skills: {e}")

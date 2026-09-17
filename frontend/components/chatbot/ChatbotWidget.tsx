@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { parseChatResponse, type ChatOutcome } from '@/lib/chat-response'
@@ -24,6 +26,9 @@ interface Message {
 }
 
 const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
+  const t = useTranslations('ChatbotWidget')
+  const locale = useLocale()
+
   const [isOpen, setIsOpen] = useState(false)
   const [showFloatingButton, setShowFloatingButton] = useState(false)
   const mode: ChatMode = 'natural'
@@ -85,20 +90,20 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userQuery, mode }),
+        body: JSON.stringify({ message: userQuery, mode, language: locale }),
         signal: controller.signal,
       })
       if (!response.ok) {
         const message = response.status === 429
-          ? 'Dein Chat-Limit ist erreicht. Bitte versuche es später erneut.'
+          ? t('limit')
           : response.status === 503
-            ? 'Der Chat ist gerade ausgelastet. Bitte versuche es in Kürze erneut.'
+            ? t('busy')
             : response.status === 504
-              ? 'Die Anfrage dauert zu lange. Bitte versuche es erneut.'
-              : 'Der Chat ist gerade nicht verfügbar. Bitte versuche es später erneut.'
+              ? t('timeout')
+              : t('unavailable')
         throw new Error(message)
       }
-      const answer = parseChatResponse(await response.json())
+      const answer = parseChatResponse(await response.json(), t('invalidResponse'))
       setMessages(previous => [...previous, {
         id: (Date.now() + 1).toString(), role: 'assistant', ...answer,
         responseTime: Number(((performance.now() - started) / 1000).toFixed(1)),
@@ -107,8 +112,8 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
       setMessages(previous => [...previous, {
         id: (Date.now() + 1).toString(), role: 'assistant', sources: [],
         content: controller.signal.aborted
-          ? 'Die Anfrage dauert zu lange. Bitte versuche es erneut.'
-          : error instanceof Error ? error.message : 'Der Chat ist gerade nicht verfügbar.',
+          ? t('timeout')
+          : error instanceof Error ? error.message : t('unavailableShort'),
       }])
     } finally {
       clearTimeout(timeout)
@@ -191,10 +196,10 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
               {messages.length === 0 && (
                 <div className="bg-text-light/5 dark:bg-text-dark/5 rounded-lg p-4">
                   <p className="text-sm text-text-light dark:text-text-dark mb-2">
-                    👋 Hallo! Ich bin dein Portfolio-Assistent.
+                    {t('welcome')}
                   </p>
                   <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                    Stell mir Fragen über Lucas Berufserfahrung, Projekte, Ausbildung und Skills. Ich beantworte sie mit verifizierten Informationen aus dem Portfolio.
+                    {t('intro')}
                   </p>
                 </div>
               )}
@@ -217,7 +222,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                     {/* Sources */}
                     {message.sources && message.sources.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-text-light/10 dark:border-text-dark/10 space-y-2">
-                        <p className="text-xs font-medium opacity-75">📚 Quellen:</p>
+                        <p className="text-xs font-medium opacity-75">{t('sources')}</p>
                         {message.sources.map((source, index) => (
                           <a
                             key={index}
@@ -264,7 +269,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                               </svg>
-                              Details ansehen
+                              {t('details')}
                             </div>
                           </a>
                         ))}
@@ -276,7 +281,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                       <div className="mt-2 pt-2 border-t border-text-light/10 dark:border-text-dark/10 flex items-center gap-3 text-xs opacity-60">
                         {message.outcome !== undefined && (
                           <span className="flex items-center gap-1">
-                            {message.outcome === 'answered' ? 'Mit Quellen' : message.outcome === 'source_fallback' ? 'Portfolio-Auszüge' : 'Keine belegte Antwort'}
+                            {message.outcome === 'answered' ? t('answered') : message.outcome === 'source_fallback' ? t('excerpts') : t('noAnswer')}
                           </span>
                         )}
                         {message.responseTime && (
@@ -312,7 +317,7 @@ const ChatbotWidget = forwardRef<ChatbotWidgetRef>((props, ref) => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  placeholder="Stell mir eine Frage..."
+                  placeholder={t('placeholder')}
                   disabled={isLoading}
                   className="flex-1 px-4 py-2 border border-cream-dark dark:border-dark-bg rounded-lg focus:outline-none focus:border-tekhelet bg-cream dark:bg-dark-bg text-text-light dark:text-text-dark disabled:opacity-50"
                 />

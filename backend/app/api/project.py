@@ -9,6 +9,7 @@ from typing import List
 from app.database import get_db
 from app.models.project import Project
 from app.schemas.project import ProjectResponse
+from app.services.translation_service import Language, overlay_translations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/api", tags=["projects"])
     summary="Get projects",
     description="Retrieve all projects ordered by start date (newest first)",
 )
-async def get_projects(db: Session = Depends(get_db)) -> List[ProjectResponse]:
+async def get_projects(db: Session = Depends(get_db), lang: Language = 'de') -> List[ProjectResponse]:
     """
     Get projects
 
@@ -73,7 +74,7 @@ async def get_projects(db: Session = Depends(get_db)) -> List[ProjectResponse]:
             logger.info("No projects found in database")
             return []
 
-        return projects
+        return overlay_translations(db, 'projects', projects, lang)
 
     except Exception as e:
         logger.error(f"Error retrieving projects: {e}")

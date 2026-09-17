@@ -8,6 +8,7 @@ from typing import List
 from app.database import get_db
 from app.models.education import Education
 from app.schemas.education import EducationResponse
+from app.services.translation_service import Language, overlay_translations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api", tags=["education"])
     summary="Get education records",
     description="Retrieve all education records ordered by start date (newest first)"
 )
-async def get_education(db: Session = Depends(get_db)) -> List[EducationResponse]:
+async def get_education(db: Session = Depends(get_db), lang: Language = 'de') -> List[EducationResponse]:
     """
     Get education records
 
@@ -65,7 +66,7 @@ async def get_education(db: Session = Depends(get_db)) -> List[EducationResponse
             logger.info("No education records found in database")
             return []
 
-        return education_records
+        return overlay_translations(db, 'education', education_records, lang)
 
     except Exception as e:
         logger.error(f"Error retrieving education records: {e}")

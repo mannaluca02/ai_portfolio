@@ -1,0 +1,143 @@
+{
+  "About": {
+    "section": "01 · About me",
+    "title": "Who I am",
+    "welcome": "Welcome to my portfolio! Explore my experience and projects.",
+    "location": "Location",
+    "role": "Role",
+    "availability": "Availability"
+  },
+  "Certificates": {
+    "section": "06 · Certificates",
+    "title": "Certifications",
+    "expired": "Expired",
+    "valid": "Valid",
+    "view": "View certificate",
+    "close": "Close",
+    "openTab": "Open in new tab",
+    "certificateLabel": "Certificate: {name}",
+    "imageError": "Image could not be loaded",
+    "imageHint": "Please use the link to open in a new tab."
+  },
+  "Contact": {
+    "section": "07 · Contact",
+    "title": "Get in touch",
+    "details": "Contact details",
+    "loading": "Loading contact details...",
+    "phone": "Phone",
+    "location": "Location",
+    "availability": "Availability",
+    "name": "Name *",
+    "namePlaceholder": "Your name",
+    "email": "Email *",
+    "emailPlaceholder": "your.email@example.com",
+    "subject": "Subject *",
+    "subjectPlaceholder": "What is it about?",
+    "message": "Message *",
+    "messagePlaceholder": "Your message...",
+    "sending": "Sending...",
+    "send": "Send message",
+    "success": "Thank you for your message! I will get back to you as soon as possible.",
+    "error": "Your message could not be sent. Please try again later."
+  },
+  "Education": {
+    "section": "04 · Education",
+    "title": "Education",
+    "ongoing": "Ongoing",
+    "grade": "Grade",
+    "field": "Field of study",
+    "achievements": "Achievements",
+    "years": "{count, plural, one {# year} other {# years}}",
+    "months": "{count, plural, one {# month} other {# months}}",
+    "degreeType": {
+      "Bachelor": "Bachelor",
+      "Master": "Master",
+      "PhD": "PhD",
+      "Diplom": "Diploma",
+      "Ausbildung": "Apprenticeship",
+      "Zertifikat": "Certificate",
+      "Andere": "Other"
+    }
+  },
+  "Experience": {
+    "section": "02 · Experience",
+    "title": "Work experience",
+    "present": "Present",
+    "responsibilities": "Responsibilities",
+    "technologies": "Technologies",
+    "empty": "No work experience found.",
+    "years": "{count, plural, one {# year} other {# years}}",
+    "months": "{count, plural, one {# month} other {# months}}",
+    "employment": {
+      "Vollzeit": "Full-time",
+      "Teilzeit": "Part-time",
+      "Freelance": "Freelance",
+      "Praktikum": "Internship",
+      "Werkstudent": "Working student"
+    }
+  },
+  "Hero": {
+    "greeting": "Hi, I’m",
+    "chat": "Chat with my portfolio bot",
+    "chatHint": "Ask me about my experience & projects",
+    "learnMore": "Learn more",
+    "contact": "Contact",
+    "scrollAbout": "Scroll to about section"
+  },
+  "Projects": {
+    "untilPresent": "- Present",
+    "role": "Role:",
+    "teamSize": "Team size:",
+    "client": "Client:",
+    "technologies": "Technologies",
+    "section": "03 · Projects",
+    "title": "Selected projects",
+    "all": "All projects",
+    "emptyFeatured": "No featured projects available.",
+    "empty": "No projects found.",
+    "people": "{count, plural, one {# person} other {# people}}"
+  },
+  "Skills": {
+    "section": "05 · Skills",
+    "title": "Skills & expertise",
+    "empty": "No skills found.",
+    "years": "{count, plural, one {# year} other {# years}}"
+  },
+  "Footer": {
+    "loading": "Loading...",
+    "about": "About me",
+    "projects": "Projects",
+    "experience": "Experience",
+    "education": "Education",
+    "certificates": "Certificates",
+    "contact": "Contact",
+    "rights": ". All rights reserved.",
+    "legal": "Legal notice (German)",
+    "privacy": "Privacy policy (German)"
+  },
+  "Navbar": {
+    "about": "About me",
+    "experience": "Experience",
+    "projects": "Projects",
+    "education": "Education",
+    "certificates": "Certificates",
+    "contact": "Contact",
+    "toggleMenu": "Toggle menu"
+  },
+  "ChatbotWidget": {
+    "limit": "You have reached your chat limit. Please try again later.",
+    "busy": "The chat is busy. Please try again shortly.",
+    "timeout": "The request is taking too long. Please try again.",
+    "unavailable": "The chat is unavailable. Please try again later.",
+    "unavailableShort": "The chat is unavailable.",
+    "welcome": "👋 Hello! I’m your portfolio assistant.",
+    "intro": "Ask me about Luca’s work experience, projects, education and skills. I answer using verified information from the portfolio.",
+    "sources": "📚 Sources:",
+    "details": "View details",
+    "answered": "With sources",
+    "excerpts": "Portfolio excerpts",
+    "noAnswer": "No supported answer",
+    "placeholder": "Ask me a question...",
+    "invalidResponse": "The answer could not be verified. Please try again."
+  }
+}

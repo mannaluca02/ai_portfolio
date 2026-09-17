@@ -22,7 +22,7 @@ chat_slots = asyncio.Semaphore(settings.CHAT_MAX_CONCURRENT)
 def process_in_worker(request: ChatRequest) -> ChatResponse:
     # Each session is created, used and closed within one worker thread.
     with SessionLocal() as db:
-        return get_chatbot_service(db).process_message(request.message.strip(), request.mode)
+        return get_chatbot_service(db).process_message(request.message.strip(), request.mode, language=request.language)
 
 
 @router.post(

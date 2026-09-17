@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     VERIFICATION_THRESHOLD: float = Field(default=0.55, ge=0.4, le=1.0)
 
     # Application
+    # Provisional English settings: retain the German values until measured.
+    VERIFICATION_THRESHOLD_EN: float = Field(default=0.55, ge=0.4, le=1.0)
+    EXCERPT_FLOOR_EN: float = Field(default=0.40, ge=0.0, le=1.0)
+    EXCERPT_GAP_EN: float = Field(default=0.03, ge=0.0, le=1.0)
+
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"

@@ -17,7 +17,10 @@ ABBREVIATIONS = frozenset({
 })
 
 
-def continues_sentence(part: str) -> bool:
+ENGLISH_ABBREVIATIONS = frozenset({'e.g.', 'i.e.', 'etc.', 'inc.', 'ltd.', 'corp.', 'dr.', 'mr.', 'mrs.', 'ms.', 'prof.', 'vs.', 'no.'})
+
+
+def continues_sentence(part: str, language: str = 'de') -> bool:
     """True when a trailing period is German punctuation, not a sentence end.
 
     "erreichte er den 9. Platz [1]." is one sentence. Splitting it left the
@@ -28,12 +31,12 @@ def continues_sentence(part: str) -> bool:
     stripped = part.rstrip()
     if not stripped.endswith("."):
         return False
-    if re.search(r"(?<![\d.])\d{1,2}\.$", stripped):
+    if language == "de" and re.search(r"(?<![\d.])\d{1,2}\.$", stripped):
         return True
-    return stripped.rsplit(maxsplit=1)[-1].casefold() in ABBREVIATIONS
+    return stripped.rsplit(maxsplit=1)[-1].casefold() in (ENGLISH_ABBREVIATIONS if language == "en" else ABBREVIATIONS)
 
 
-def split_sentences(text: str) -> list[str]:
+def split_sentences(text: str, language: str = "de") -> list[str]:
     """Sentences in order, bullet markers removed, citations kept."""
     # Accept both "sentence [1]." and "sentence. [1]". Never discard a short
     # factual statement such as "Luca ist Arzt" as if it were a greeting.
@@ -43,7 +46,7 @@ def split_sentences(text: str) -> list[str]:
         part = raw.strip().lstrip("•*- ")
         if not part:
             continue
-        if sentences and continues_sentence(sentences[-1]):
+        if sentences and continues_sentence(sentences[-1], language):
             sentences[-1] = f"{sentences[-1]} {part}"
         else:
             sentences.append(part)

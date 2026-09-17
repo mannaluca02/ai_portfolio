@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
@@ -36,19 +38,22 @@ const EmailIcon = () => (
 )
 
 export default function Footer() {
+  const t = useTranslations('Footer')
+  const locale = useLocale()
+
   const currentYear = new Date().getFullYear()
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null)
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
 
   useEffect(() => {
     // Fetch contact info
-    fetch('/api/contact-info')
+    fetch(`/api/contact-info?lang=${locale}`)
       .then(res => res.json())
       .then(data => setContactInfo(data))
       .catch(err => console.error('Error fetching contact info:', err))
 
     // Fetch social links
-    fetch('/api/social-links')
+    fetch(`/api/social-links?lang=${locale}`)
       .then(res => res.json())
       .then(data => {
         // Ensure data is an array before setting
@@ -59,7 +64,7 @@ export default function Footer() {
         }
       })
       .catch(err => console.error('Error fetching social links:', err))
-  }, [])
+  }, [locale])
 
   const getSocialIcon = (platform: string) => {
     const platformLower = platform.toLowerCase()
@@ -75,7 +80,7 @@ export default function Footer() {
           {/* About */}
           <div className="lg:col-span-1">
             <h3 className="text-xl font-bold mb-4 text-tekhelet">
-              {contactInfo?.full_name || 'Loading...'}
+              {contactInfo?.full_name || t('loading')}
             </h3>
             <p className="text-text-secondary-light dark:text-text-secondary-dark text-sm leading-relaxed">
               {contactInfo?.title || 'Data Scientist & ML Engineer'}
@@ -89,46 +94,46 @@ export default function Footer() {
             </h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2">
               <Link
-                href="#about"
+                href={`/${locale}#about`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
-                Über mich
+                {t('about')}
               </Link>
               <Link
-                href="#projects"
+                href={`/${locale}#projects`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
-                Projekte
+                {t('projects')}
               </Link>
               <Link
-                href="#experience"
+                href={`/${locale}#experience`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
-                Erfahrung
+                {t('experience')}
               </Link>
               <Link
-                href="#skills"
+                href={`/${locale}#skills`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
                 Skills
               </Link>
               <Link
-                href="#education"
+                href={`/${locale}#education`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
-                Ausbildung
+                {t('education')}
               </Link>
               <Link
-                href="#certificates"
+                href={`/${locale}#certificates`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
-                Zertifikate
+                {t('certificates')}
               </Link>
               <Link
-                href="#contact"
+                href={`/${locale}#contact`}
                 className="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-tekhelet transition-colors"
               >
-                Kontakt
+                {t('contact')}
               </Link>
             </div>
           </div>
@@ -182,23 +187,23 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-text-secondary-light dark:text-text-secondary-dark">
             {/* Copyright */}
             <div className="text-center md:text-left">
-              <p>&copy; {currentYear} {contactInfo?.full_name || 'Portfolio'}. Alle Rechte vorbehalten.</p>
+              <p>&copy; {currentYear} {contactInfo?.full_name || 'Portfolio'}{t('rights')}</p>
             </div>
 
             {/* Legal Links */}
             <div className="flex items-center gap-4">
               <Link
-                href="/impressum"
+                href="/de/impressum"
                 className="hover:text-tekhelet transition-colors"
               >
-                Impressum
+                {t('legal')}
               </Link>
               <span className="text-gray-400">•</span>
               <Link
-                href="/datenschutz"
+                href="/de/datenschutz"
                 className="hover:text-tekhelet transition-colors"
               >
-                Datenschutz
+                {t('privacy')}
               </Link>
             </div>
           </div>

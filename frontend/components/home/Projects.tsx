@@ -1,5 +1,7 @@
 'use client'
 
+import {useTranslations, useLocale} from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import FadeInSection from '@/components/ui/FadeInSection'
@@ -29,6 +31,9 @@ type TabType = 'featured' | 'all'
 
 
 export default function Projects() {
+  const t = useTranslations('Projects')
+  const locale = useLocale()
+
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -39,7 +44,7 @@ export default function Projects() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/projects')
+        const response = await fetch(`/api/projects?lang=${locale}`)
         if (response.ok) {
           const data = await response.json()
           setProjects(data)
@@ -52,7 +57,7 @@ export default function Projects() {
     }
 
     fetchProjects()
-  }, [])
+  }, [locale])
 
   // Handle accordion opening from chatbot links
   useEffect(() => {
@@ -102,7 +107,7 @@ export default function Projects() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return null
     const date = new Date(dateString)
-    return date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+    return date.toLocaleDateString(locale === 'de' ? 'de-CH' : 'en-GB', { month: 'short', year: 'numeric' })
   }
 
   const getProjectTypeColor = (type: string) => {
@@ -156,7 +161,7 @@ export default function Projects() {
               <p className="text-sm line-clamp-1">{project.description}</p>
               {project.start_date && (
                 <span className="text-xs">
-                  {formatDate(project.start_date)} {project.end_date ? `- ${formatDate(project.end_date)}` : '- Heute'}
+                  {formatDate(project.start_date)} {project.end_date ? `- ${formatDate(project.end_date)}` : t('untilPresent')}
                 </span>
               )}
             </div>
@@ -193,19 +198,19 @@ export default function Projects() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               {project.your_role && (
                 <div>
-                  <span className="font-semibold text-text-light dark:text-text-dark">Rolle: </span>
+                  <span className="font-semibold text-text-light dark:text-text-dark">{t('role')} </span>
                   <span className="text-text-secondary-light dark:text-text-secondary-dark">{project.your_role}</span>
                 </div>
               )}
               {project.team_size && (
                 <div>
-                  <span className="font-semibold text-text-light dark:text-text-dark">Teamgröße: </span>
-                  <span className="text-text-secondary-light dark:text-text-secondary-dark">{project.team_size} {project.team_size === 1 ? 'Person' : 'Personen'}</span>
+                  <span className="font-semibold text-text-light dark:text-text-dark">{t('teamSize')} </span>
+                  <span className="text-text-secondary-light dark:text-text-secondary-dark">{t('people', {count: project.team_size})}</span>
                 </div>
               )}
               {project.client_company && (
                 <div>
-                  <span className="font-semibold text-text-light dark:text-text-dark">Kunde: </span>
+                  <span className="font-semibold text-text-light dark:text-text-dark">{t('client')} </span>
                   <span className="text-text-secondary-light dark:text-text-secondary-dark">{project.client_company}</span>
                 </div>
               )}
@@ -215,7 +220,7 @@ export default function Projects() {
             {project.technologies && project.technologies.length > 0 && (
               <div>
                 <h4 className="text-sm font-semibold text-text-light dark:text-text-dark mb-3 uppercase tracking-wider">
-                  Technologien
+                  {t('technologies')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {project.technologies.map((tech, idx) => (
@@ -313,14 +318,14 @@ export default function Projects() {
         {/* Section Label */}
         <FadeInSection>
           <span className="inline-block text-xs uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark font-medium">
-            03 — Projekte
+            {t('section')}
           </span>
         </FadeInSection>
 
         {/* Section Title */}
         <FadeInSection delay={100}>
           <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-text-light dark:text-text-dark">
-            Ausgewählte Projekte
+            {t('title')}
           </h2>
         </FadeInSection>
 
@@ -357,7 +362,7 @@ export default function Projects() {
                   : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-text-light dark:hover:text-text-dark'
               }`}
             >
-              Alle Projekte
+              {t('all')}
               {allCount > 0 && (
                 <span className="ml-2 text-xs opacity-60">({allCount})</span>
               )}
@@ -380,7 +385,7 @@ export default function Projects() {
           {visibleProjects.length === 0 && (
             <div className="text-center py-16">
               <p className="text-xl text-text-secondary-light dark:text-text-secondary-dark">
-                {activeTab === 'featured' ? 'Keine Featured Projekte vorhanden.' : 'Keine Projekte gefunden.'}
+                {activeTab === 'featured' ? t('emptyFeatured') : t('empty')}
               </p>
             </div>
           )}

@@ -58,6 +58,9 @@ anzahl menge groesse größe dauer beginn ende stand bereits fachbereich
 anstellung anstellungen handle profil account konto benutzername nutzername
 adresse standort ort orte titel position positionen stelle stellen link links
 seite webseite website eintrag eintraege einträge angabe angaben liste
+year years month months experience skills responsibilities projects work education
+degree studies student development languages tools software engineering role
+currently previously since during also additionally including uses used has have
 """
 COMMON_WORDS = frozenset(_COMMON_WORD_TEXT.split())
 # Matched by stem as well, so German inflection does not need to be enumerated:
@@ -112,11 +115,11 @@ class VerifierService:
         self.embedding_service = get_embedding_service()
         self.verification_threshold = settings.VERIFICATION_THRESHOLD
 
-    def verify_response(self, response: str, sources: list[SearchResult], *, threshold=None):
+    def verify_response(self, response: str, sources: list[SearchResult], *, threshold=None, language: str = "de"):
         threshold = self.verification_threshold if threshold is None else threshold
         if not response or not sources:
             return VerificationResult(False, 0.0, [{"error": "Missing answer or sources"}])
-        sentences = self._split_into_sentences(response)
+        sentences = self._split_into_sentences(response, language=language)
         if not sentences:
             return VerificationResult(False, 0.0, [{"error": "No factual statements"}])
         evidence = [source.evidence_text() for source in sources]
