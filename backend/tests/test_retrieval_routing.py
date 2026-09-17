@@ -143,3 +143,18 @@ def test_a_spoken_language_question_routes_to_the_languages_table(question):
 def test_a_programming_question_is_not_mistaken_for_a_spoken_language(question):
     """Word boundaries: "Programmiersprache" must not match "Sprache"."""
     assert IntentService().detect_intent(question).boost_factors.get("languages", 1.0) <= 1.0
+
+
+@pytest.mark.parametrize('question', [
+    'How old are you?', 'How old is he?', 'How old am I?',
+    'How old is Luca?', 'HOW OLD ARE YOU?', 'How  old is he?',
+    'Wie alt bist du?',
+])
+def test_age_questions_keep_profile_evidence_on_topic(question):
+    intent = IntentService().detect_intent(question)
+    assert intent.boost_factors['contact_info'] > 1
+    assert set(intent.tables) == TABLES
+
+
+def test_old_projects_are_not_personal_age_questions():
+    assert IntentService().detect_intent('Show old projects').boost_factors['contact_info'] < 1

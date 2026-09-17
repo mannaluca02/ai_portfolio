@@ -305,3 +305,12 @@ def test_excerpts_below_the_floor_are_not_offered_at_all(chatbot, noisy_results)
     response = chatbot._source_fallback(noisy_results, ChatMode.NATURAL)
     assert response.outcome == "no_information"
     assert not response.sources
+
+
+@pytest.mark.parametrize('pronoun', ['I', "I'm", 'He', 'Luca'])
+def test_english_age_claims_pass_fact_checks_but_wrong_ages_do_not(verifier, pronoun):
+    source = SearchResult(1, 'contact_info', 'Luca', '', 'contact', 'contact', 'contact', 0.8, {})
+    source.document = 'full_name: Luca\nage: 23 Jahre alt'
+    verb = '' if pronoun == "I'm" else ' am' if pronoun == 'I' else ' is'
+    assert verifier.verify_response(f'{pronoun}{verb} 23 years old [1].', [source], language='en').is_verified
+    assert not verifier.verify_response(f'{pronoun}{verb} 24 years old [1].', [source], language='en').is_verified

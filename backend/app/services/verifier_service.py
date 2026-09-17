@@ -30,6 +30,7 @@ gemaess weiterhin ebenso ebenfalls dadurch daher deshalb darum somit insgesamt
 zusätzlich zusaetzlich anschliessend anschließend schliesslich schließlich
 hier hierbei hierfür hierfuer dafür dafuer dagegen neben nur noch bereits
 the a an of to for with at on and or in his her their he she it they this that
+i my we our you your
 """
 FUNCTION_WORDS = frozenset(_FUNCTION_WORD_TEXT.split())
 

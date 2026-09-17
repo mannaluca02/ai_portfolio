@@ -46,3 +46,11 @@ def test_generator_uses_bounded_configuration_and_shared_evidence(monkeypatch):
     client.chat.completions.create.side_effect = TimeoutError()
     with pytest.raises(TimeoutError):
         generator.generate_response('Python?', [source])
+
+
+def test_english_personal_answers_identify_the_owner_without_inventing_age():
+    generator = generator_service.GeneratorService.__new__(generator_service.GeneratorService)
+    prompt = generator._build_system_prompt('en')
+    assert 'name supplied in the context' in prompt
+    assert 'Use the supplied computed age' in prompt
+    assert "do not attribute the portfolio owner's age to the visitor" in prompt

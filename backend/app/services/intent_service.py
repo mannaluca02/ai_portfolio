@@ -62,7 +62,7 @@ class IntentService:
     # can answer it.
     PERSONAL_KEYWORDS = (
         "alt", "alter", "geboren", "geburtstag", "geburtsdatum", "jahrgang",
-        "age", "born", "wohnt", "wohnort", "lebt", "wer ist", "wer bist",
+        "age", "how old", "born", "wohnt", "wohnort", "lebt", "wer ist", "wer bist",
         "ueber dich", "über dich", "vorstellen",
     )
     # Spoken languages only. Word boundaries keep "Programmiersprache" out, so a
