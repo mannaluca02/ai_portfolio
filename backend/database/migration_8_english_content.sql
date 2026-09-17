@@ -1,0 +1,583 @@
+-- Run this entire file in the Supabase SQL Editor as postgres.
+-- Includes migration 7: no separate migration or new base-table columns needed.
+-- Adds 59 English fields; German rows and embeddings remain unchanged.
+-- Review the English values below before running. Education track wording follows
+-- the original source, whose degree title and field of study differ.
+-- Atomic and rerunnable. Missing/changed source rows abort the entire transaction.
+-- To preview without saving, replace the final COMMIT with ROLLBACK.
+BEGIN;
+SET LOCAL search_path = public, pg_catalog;
+SET LOCAL lock_timeout = '10s';
+
+CREATE TABLE IF NOT EXISTS public.content_translations (
+    source_table TEXT NOT NULL CHECK (source_table IN
+        ('work_experiences', 'projects', 'skills', 'certificates', 'education',
+         'contact_info', 'hobbies', 'languages')),
+    source_id INTEGER NOT NULL CHECK (source_id > 0),
+    locale TEXT NOT NULL CHECK (locale IN ('de', 'en')),
+    field TEXT NOT NULL,
+    value JSONB NOT NULL CHECK (jsonb_typeof(value) IN ('string', 'array')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (source_table, source_id, locale, field)
+);
+ALTER TABLE public.content_translations ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.content_translations FROM anon, authenticated;
+-- Like the base tables, only the backend database role reads these rows.
+DO $trigger$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger
+        WHERE tgrelid = 'public.content_translations'::regclass
+          AND tgname = 'update_content_translations_updated_at'
+          AND NOT tgisinternal
+    ) THEN
+        CREATE TRIGGER update_content_translations_updated_at
+            BEFORE UPDATE ON public.content_translations
+            FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+    END IF;
+END
+$trigger$;
+
+DO $import$
+DECLARE
+    entries JSONB := $translations$
+[
+  {
+    "source_table": "contact_info",
+    "slug": "contact",
+    "locale": "en",
+    "field": "title",
+    "source_value": "Data Science & Artificial Intelligence Student (BSc) \u2013 FHNW",
+    "value": "Data Science & Artificial Intelligence Student (BSc), FHNW"
+  },
+  {
+    "source_table": "contact_info",
+    "slug": "contact",
+    "locale": "en",
+    "field": "country",
+    "source_value": "Schweiz",
+    "value": "Switzerland"
+  },
+  {
+    "source_table": "contact_info",
+    "slug": "contact",
+    "locale": "en",
+    "field": "availability",
+    "source_value": "Verf\u00fcgbar f\u00fcr neue Projekte :)",
+    "value": "Available for new projects :)"
+  },
+  {
+    "source_table": "contact_info",
+    "slug": "contact",
+    "locale": "en",
+    "field": "bio",
+    "source_value": "Ich bin Luca \u2013 Data Science ist mein Werkzeug, um Strukturen im Chaos zu erkennen.\nModelle zu entwickeln bedeutet f\u00fcr mich, Denken in Logik zu \u00fcbersetzen.\nIch arbeite gern pr\u00e4zise, rechne lieber als ich rede, und strebe immer nach der besten L\u00f6sung.\nInnovation und Effizienz treiben mich an \u2013 nicht leere Schlagworte.\nMein Ziel: Systeme zu bauen, die lernen, sich selbst zu verbessern.\n",
+    "value": "I\u2019m Luca. Data Science is my tool for finding structure in chaos.\nFor me, developing models means translating thought into logic.\nI enjoy working precisely, prefer calculations to talk, and always aim for the best solution.\nInnovation and efficiency drive me, not empty buzzwords.\nMy goal is to build systems that learn to improve themselves."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-fundyour-club",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Fundyour.club ist eine webbasierte Plattform zur transparenten Finanzierung von Vereinsprojekten. Vereine, NGOs und Clubs k\u00f6nnen \u00fcber Produktverk\u00e4ufe, Spenden und Pool-Finanzierungen Geld sammeln. Das System umfasst ein vollst\u00e4ndiges MVC-Backend in PHP, eine Next.js-Frontend-App mit Tailwind CSS sowie Features wie Club-Accounts, Produktverwaltung, Spendenbescheinigungen, automatisierte Zahlungsabwicklung und NGO-Verifizierung.",
+    "value": "Fundyour.club is a web platform for transparent funding of club projects. Associations, NGOs and clubs can raise money through product sales, donations and pooled funding. The system includes a complete MVC backend in PHP, a Next.js frontend with Tailwind CSS, and features such as club accounts, product management, donation receipts, automated payment processing and NGO verification."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-product-affinity-model",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Machine-Learning-Modell zur Priorisierung einer Kreditkarten-Kampagne auf dem PKDD'99-Datensatz einer Retailbank (8 Tabellen, 1.06 Mio. Transaktionen, 3'893 Kunden). Kern ist ein temporales Studiendesign mit tenure-matched Pseudo-Events gegen Immortal Time Bias und Leakage: jeder Kunde erh\u00e4lt einen Stichtag, Features stammen nur aus dem Fenster davor. Aus tsfresh-Zeitreihen und handgefertigten Merkmalen entstehen rund 1'130 Pr\u00e4diktoren, f\u00fcnf Modelle wurden verglichen. XGBoost erreicht ROC-AUC 0.919 und Average Precision 0.582; die Top-10-Prozent-Kontaktliste enth\u00e4lt 60.3 Prozent K\u00e4ufer statt 13.9 Prozent Pr\u00e4valenz, 4.3-mal mehr als Zufall. Erkl\u00e4rbarkeit \u00fcber SHAP.",
+    "value": "Machine learning model for prioritising a credit card campaign using the PKDD\u201999 retail banking dataset (8 tables, 1.06 million transactions, 3,893 customers). At its core is a temporal study design with tenure-matched pseudo-events to address immortal time bias and leakage: each customer receives a cutoff date, and features use only the preceding window. tsfresh time series features and manually engineered features yield around 1,130 predictors; five models were compared. XGBoost achieves ROC-AUC 0.919 and Average Precision 0.582. The top 10% contact list contains 60.3% buyers compared with 13.9% prevalence, 4.3 times the random baseline. SHAP provides explainability."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-postfinance-horizons",
+    "locale": "en",
+    "field": "description",
+    "source_value": "In drei Tagen am Hackathon B\u00e4rnH\u00e4ckt 2026 im Viererteam entstanden, PostFinance-Challenge \u0022Beyond the List\u0022. Mein Beitrag waren die Zukunftsprognose und der Chat-Assistent \u0022Future Me\u0022. Die Prognose erkennt wiederkehrende Zahlungen \u00fcber eine transparente Heuristik (H\u00e4ndler, Kategorie, Median der Abst\u00e4nde) und rechnet die Liquidit\u00e4t fort; Szenarien wie Abo k\u00fcndigen liefern Baseline und Simulation in einer Antwort. Leitprinzip des Assistenten: das Sprachmodell rechnet nie. Zwei getrennte LLM-Calls \u00fcbernehmen nur Intent-Extraktion und Formulierung, alle Zahlen kommen deterministisch aus dem Forecast-Service, ein Timeout ergibt 504 statt einer erfundenen Antwort. Backend: FastAPI mit handgeschriebenem OData-v4-Layer, Docker, Pytest-Suite.",
+    "value": "Built in three days by a team of four at the B\u00e4rnH\u00e4ckt 2026 hackathon for the PostFinance challenge \u201cBeyond the List\u201d. My contribution was the forecast and the \u201cFuture Me\u201d chat assistant. The forecast detects recurring payments using a transparent heuristic (merchant, category and median payment intervals) and projects liquidity. Scenarios such as cancelling a subscription return a baseline and simulation in one response. The assistant\u2019s guiding principle: the language model never performs calculations. Two separate LLM calls handle intent extraction and wording only; all figures come deterministically from the forecast service, and a timeout returns 504 instead of an invented answer. Backend: FastAPI with a hand-written OData v4 layer, Docker and a pytest suite."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-postfinance-horizons",
+    "locale": "en",
+    "field": "your_role",
+    "source_value": "ML engineer, Forecasting & LLM-Assistent",
+    "value": "ML Engineer, Forecasting & LLM Assistant"
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-postfinance-horizons",
+    "locale": "en",
+    "field": "client_company",
+    "source_value": "PostFinance AG (Challenge-Geberin)",
+    "value": "PostFinance AG (challenge sponsor)"
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-cnn-hyperparameter-tuning",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Systematisches Hyperparameter-Tuning eines CNN auf dem Intel Image Classification Dataset (6 Klassen, rund 14'000 Trainingsbilder). Phase 1: eigenes Basismodell, Lernraten- und Batch-Size-Tuning, 5-fach-Kreuzvalidierung f\u00fcr den statistischen Fehler, Kanalstatistiken nur auf dem Trainings-Split gegen Leakage. Phase 2: elf Hypothesen einzeln getestet, je als eigener W&B-Report dokumentiert, von Modelltiefe \u00fcber Dropout und BatchNorm bis Transfer Learning. Nicht alle best\u00e4tigten sich, 5x5-Kernel und Average Pooling lagen unter der Baseline. Die sieben wirksamen Techniken wurden kombiniert und per 48-st\u00fcndigem W&B-Sweep abgestimmt: 89.20 Prozent Test-Accuracy gegen\u00fcber 84.89 Prozent Baseline.",
+    "value": "Systematic CNN hyperparameter tuning on the Intel Image Classification Dataset (6 classes, around 14,000 training images). Phase 1: a custom baseline model, learning-rate and batch-size tuning, five-fold cross-validation to estimate statistical error, and channel statistics computed only on the training split to prevent leakage. Phase 2: eleven hypotheses tested individually, each documented in its own W&B report, from model depth, dropout and BatchNorm to transfer learning. Not all were confirmed: 5\u00d75 kernels and average pooling performed below the baseline. The seven effective techniques were combined and tuned in a 48-hour W&B sweep: 89.20% test accuracy compared with the 84.89% baseline."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-ai-portfolio-rag-chatbot",
+    "locale": "en",
+    "field": "name",
+    "source_value": "AI Digital Portfolio mit RAG Chatbot",
+    "value": "AI Digital Portfolio with RAG Chatbot"
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-ai-portfolio-rag-chatbot",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Eigenentwickeltes digitales Portfolio mit integriertem RAG-basiertem KI-Chatbot. Der Chatbot nutzt semantische Suche \u00fcber pgvector-Embeddings und generiert kontextbezogene Antworten aus den Portfolio-Inhalten. Architektur auf Next.js (Frontend), FastAPI (Backend) und Supabase (PostgreSQL + pgvector). Features umfassen semantische \u00c4hnlichkeitspr\u00fcfung, zweistufigen Chatmodus, deterministische Quellenverlinkung und automatische Embedding-Generierung.",
+    "value": "Custom digital portfolio with an integrated RAG-based AI chatbot. The chatbot uses semantic search over pgvector embeddings and generates contextual answers from the portfolio content. The architecture uses Next.js for the frontend, FastAPI for the backend and Supabase (PostgreSQL + pgvector). Features include semantic similarity verification, two chat modes, deterministic source links and automatic embedding generation."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-gml",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Implementierung komplexer Machine Learning Algorithmen 'from scratch' unter Verwendung von Python und NumPy, inklusive Ridge Regression, modularen neuronalen Netzen (MLP) mit Backpropagation und Matrix-Factorization. L\u00f6st Problemstellungen in den Bereichen Regression, medizinische Klassifikation und Recommender Systems durch tiefgehende Datenanalyse, Feature Engineering und robuste Validierungsstrategien wie stratifizierte Cross-Validation.",
+    "value": "Implementation of complex machine learning algorithms from scratch using Python and NumPy, including ridge regression, modular neural networks (MLPs) with backpropagation, and matrix factorisation. Addresses regression, medical classification and recommender systems through detailed data analysis, feature engineering and robust validation strategies such as stratified cross-validation."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-vta-mc2",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Fourier-Analyse (FFT) und Signalverarbeitung. Dieses Repository demonstriert mittels eines Jupyter Notebooks die Umwandlung vom Zeit- in den Frequenzbereich. Der Fokus liegt auf der FFT-Implementierung, digitalen Filterung (Rauschunterdr\u00fcckung) und der frequenzbasierten Rekonstruktion verschiedener Datenformate (Time Series, Audio, Bild).\n\n\n\n\n\n\n\n",
+    "value": "Fourier analysis (FFT) and signal processing. A Jupyter notebook demonstrates transformation from the time domain to the frequency domain. The focus is on FFT implementation, digital filtering (noise reduction) and frequency-based reconstruction of different data formats: time series, audio and images."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-fhnw-room-booker",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Automatisierungsskript zur effizienten Raumreservierung am FHNW Campus Muttenz. Das Tool durchsucht verf\u00fcgbare R\u00e4ume, optimiert Zeitfenster und f\u00fchrt Buchungen automatisch \u00fcber Microsoft-Authentifizierung aus. Enth\u00e4lt konfigurierbare Einstellungen, Session-Management, Testmodus und flexible Anpassung via config.json.",
+    "value": "Automation script for efficient room reservations at the FHNW Muttenz campus. The tool searches for available rooms, optimises time slots and makes bookings automatically using Microsoft authentication. Includes configurable settings, session management, a test mode and flexible customisation through config.json."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-vta-mc1",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Eigenimplementiertes neuronales Netzwerk zur Klassifikation von handgeschriebenen Ziffern (MNIST-Datensatz). Enth\u00e4lt selbst entwickelte Klassen f\u00fcr lineare Layer, Forward- und Backward-Pass sowie Parameter-Updates. Verschiedene Lernraten und Hidden-Layer-Gr\u00f6ssen werden verglichen; Kostenfunktionen (MSE, MAE) werden zur Analyse des Trainingsverlaufs visualisiert.",
+    "value": "Neural network implemented from scratch to classify handwritten digits from the MNIST dataset. Includes custom classes for linear layers, forward and backward passes, and parameter updates. Compares different learning rates and hidden-layer sizes; loss functions (MSE, MAE) are visualised to analyse training progress."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-ala",
+    "locale": "en",
+    "field": "name",
+    "source_value": "Anwendung der Linearen Algebra",
+    "value": "Applications of Linear Algebra"
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-ala",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Anwendungsbeispiele der Linearen Algebra in Data Science. Folgende Anwendungen wurden erarbeitet: PCA, Lineare Regression, Recommender Systeme, Singul\u00e4rwertzerlegung. ",
+    "value": "Applications of linear algebra in Data Science, covering PCA, linear regression, recommender systems and singular value decomposition."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-wer",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Statistisches Modell zur Vorhersage von NFL-Spielergebnissen der Woche 15 (Saison 2021) basierend auf Monte-Carlo-Simulationen und Poisson-Verteilungen. Analysiert 14 Wochen historische Spieldaten und simuliert 10.000 Spielausg\u00e4nge pro Match zur Berechnung von Gewinnwahrscheinlichkeiten und Modellvalidierung.",
+    "value": "Statistical model for predicting NFL Week 15 results (2021 season) using Monte Carlo simulations and Poisson distributions. Analyses 14 weeks of historical game data and simulates 10,000 outcomes per match to calculate win probabilities and validate the model."
+  },
+  {
+    "source_table": "projects",
+    "slug": "project-cde1",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Full-Stack-Anwendung zur Visualisierung und Auswertung von Containertransportdaten mit Echtzeit\u00fcberwachung. Implementiert vier verschiedene Datenquellen (lokale CSV, WebApp, HTTP-Service, MQTT) und visualisiert GPS-Routen mit temperaturbasierter Farbcodierung auf interaktiven 2D-Karten. Integriert MQTT-basierte Live-Sensordatenerfassung mit Echtzeit-Diagrammen f\u00fcr Temperatur und Luftfeuchtigkeit.",
+    "value": "Full-stack application for visualising and analysing container transport data with real-time monitoring. Implements four data sources (local CSV, WebApp, HTTP service and MQTT) and displays GPS routes with temperature-based colour coding on interactive 2D maps. Integrates MQTT-based live sensor data collection with real-time temperature and humidity charts."
+  },
+  {
+    "source_table": "work_experiences",
+    "slug": "work-novartis-ag-2020",
+    "locale": "en",
+    "field": "position",
+    "source_value": "IT-Supporter / ICT-Supporter",
+    "value": "IT / ICT Support Specialist"
+  },
+  {
+    "source_table": "work_experiences",
+    "slug": "work-novartis-ag-2020",
+    "locale": "en",
+    "field": "location",
+    "source_value": "Basel, Schweiz",
+    "value": "Basel, Switzerland"
+  },
+  {
+    "source_table": "work_experiences",
+    "slug": "work-novartis-ag-2020",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Lehrstelle als Betriebsinformatiker EFZ bei Novartis. Einsatz in verschiedenen Abteilungen, darunter Second Level Support mit Analyse und Bearbeitung technischer Anfragen, Database Management & Automation mit Verwaltung von Datenbanken und Entwicklung von Automatisierungsskripten sowie Development mit Mitarbeit an internen Softwareprojekten und Umsetzung kleinerer Funktionen.",
+    "value": "Apprenticeship in operational IT (Swiss Federal VET Diploma, EFZ) at Novartis. Rotations through several departments, including Second Level Support, analysing and handling technical requests; Database Management & Automation, managing databases and developing automation scripts; and Development, contributing to internal software projects and implementing smaller features."
+  },
+  {
+    "source_table": "work_experiences",
+    "slug": "work-novartis-ag-2020",
+    "locale": "en",
+    "field": "responsibilities",
+    "source_value": [
+      "Migration von Windows 7 auf Windows 10 innerhalb der bestehenden IT-Infrastruktur",
+      "Isolierung und Integration \u00e4lterer Windows-Systeme, die an Laborinstrumente gebunden sind, um deren Erreichbarkeit ausserhalb des Netzwerks sicherzustellen",
+      "Entwicklung und automatisiertes Testen von Python-Skripten zur SOLR-Datenbank-Indexierung mit separaten Produktiv- und Entwicklungsinstanzen",
+      "Interne Webentwicklung und Anpassung bestehender interner Tools"
+    ],
+    "value": [
+      "Migration from Windows 7 to Windows 10 within the existing IT infrastructure",
+      "Isolation and integration of legacy Windows systems connected to laboratory instruments to ensure their accessibility from outside the network",
+      "Development and automated testing of Python scripts for SOLR database indexing, with separate production and development instances",
+      "Internal web development and adaptation of existing internal tools"
+    ]
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-bsc-data-science-fhnw",
+    "locale": "en",
+    "field": "location",
+    "source_value": "Windisch, Schweiz",
+    "value": "Windisch, Switzerland"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-bsc-data-science-fhnw",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Bachelorstudium mit Schwerpunkt auf Datenanalyse, Machine Learning, Statistik und Softwareentwicklung. Kombination aus theoretischen Grundlagen und praxisorientierten Projekten in den Bereichen KI, Datenmanagement und angewandter Informatik.",
+    "value": "Bachelor\u2019s degree programme focusing on data analysis, machine learning, statistics and software development. Combines theoretical foundations with practical projects in AI, data management and applied computer science."
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-bsc-data-science-fhnw",
+    "locale": "en",
+    "field": "achievements",
+    "source_value": [
+      "Rang 9 von 97 im Leistungsranking des Studiengangs",
+      "Vertiefung in Machine Learning, Datenanalyse und Programmierung"
+    ],
+    "value": [
+      "Ranked 9th out of 97 in the degree programme\u2019s performance ranking",
+      "Specialisation in machine learning, data analysis and programming"
+    ]
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-informatiker-efz-novartis",
+    "locale": "en",
+    "field": "degree",
+    "source_value": "Eidgen\u00f6ssisches F\u00e4higkeitszeugnis (EFZ) Informatiker \u2013 Betriebsinformatik",
+    "value": "Swiss Federal VET Diploma (EFZ) in Information Technology, Operational IT"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-informatiker-efz-novartis",
+    "locale": "en",
+    "field": "field_of_study",
+    "source_value": "Informatik / Betriebsinformatik",
+    "value": "Information Technology / Operational IT"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-informatiker-efz-novartis",
+    "locale": "en",
+    "field": "location",
+    "source_value": "Basel, Schweiz",
+    "value": "Basel, Switzerland"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-informatiker-efz-novartis",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Vierj\u00e4hrige Lehre als Betriebsinformatiker EFZ mit Eins\u00e4tzen in verschiedenen IT-Abteilungen von Novartis, darunter Second Level Support, Database Management & Automation sowie interne Webentwicklung.",
+    "value": "Four-year apprenticeship in operational IT (EFZ), with rotations through several IT departments at Novartis, including Second Level Support, Database Management & Automation, and internal web development."
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-informatiker-efz-novartis",
+    "locale": "en",
+    "field": "achievements",
+    "source_value": [
+      "Abschluss im Rang mit der Note 5.5.",
+      "Top 5%"
+    ],
+    "value": [
+      "Graduated with distinction and a grade of 5.5.",
+      "Top 5%"
+    ]
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-berufsmaturitaet-basel",
+    "locale": "en",
+    "field": "degree",
+    "source_value": "Berufsmaturit\u00e4t Wirtschaft und Dienstleistungen \u2013 Typ Wirtschaft",
+    "value": "Federal Vocational Baccalaureate in Business and Services, Business track"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-berufsmaturitaet-basel",
+    "locale": "en",
+    "field": "field_of_study",
+    "source_value": "Technik, Architektur, Life Sciences",
+    "value": "Technology, Architecture, Life Sciences"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-berufsmaturitaet-basel",
+    "locale": "en",
+    "field": "location",
+    "source_value": "Basel, Schweiz",
+    "value": "Basel, Switzerland"
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-berufsmaturitaet-basel",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Berufsmaturit\u00e4t parallel zur Informatiklehre mit Schwerpunkten Mathematik und Naturwissenschaften.",
+    "value": "Vocational baccalaureate completed alongside the IT apprenticeship, focusing on mathematics and natural sciences."
+  },
+  {
+    "source_table": "education",
+    "slug": "edu-berufsmaturitaet-basel",
+    "locale": "en",
+    "field": "achievements",
+    "source_value": [
+      "Abschlussnote in Mathematik 6.0",
+      "Abschlussnote in Schwerpunkt Mathematik 6.0"
+    ],
+    "value": [
+      "Final mathematics grade: 6.0",
+      "Final advanced mathematics grade: 6.0"
+    ]
+  },
+  {
+    "source_table": "certificates",
+    "slug": "cert-apprentice-of-the-year",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Auszeichnung \u0022Apprentice of the Year 2024\u0022 f\u00fcr herausragende Leistungen, Teamgeist und Engagement w\u00e4hrend der Ausbildung bei Novartis Pharma AG",
+    "value": "\u201cApprentice of the Year 2024\u201d award for outstanding performance, teamwork and commitment during the apprenticeship at Novartis Pharma AG."
+  },
+  {
+    "source_table": "certificates",
+    "slug": "cert-cambridge-fce",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Englischzertifikat auf Niveau B2 des Gemeinsamen Europ\u00e4ischen Referenzrahmens (GER). Beinhaltet Kompetenzen in Reading, Writing, Listening, Speaking und Use of English mit einem Gesamtscore von 178 (Grade B). Nachweis der F\u00e4higkeit, in beruflichen und akademischen Kontexten sicher auf Englisch zu kommunizieren.",
+    "value": "English certificate at CEFR level B2. Covers Reading, Writing, Listening, Speaking and Use of English, with an overall score of 178 (Grade B). Demonstrates the ability to communicate confidently in English in professional and academic contexts."
+  },
+  {
+    "source_table": "certificates",
+    "slug": "cert-itil-foundation-certificate",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Zertifizierung f\u00fcr die Grundlagen des IT Service Managements nach ITIL 4. Beinhaltet zentrale Prinzipien, Praktiken und Prozesse zur effizienten Planung, Bereitstellung und Verbesserung von IT-Services.",
+    "value": "Certification in the fundamentals of IT service management under ITIL 4. Covers key principles, practices and processes for efficiently planning, delivering and improving IT services."
+  },
+  {
+    "source_table": "certificates",
+    "slug": "cert-yfu-exchange-usa",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Abschluss des einj\u00e4hrigen Austauschprogramms \u0022Secondary School Year Program 2019/2020\u0022 in den USA. Teilnahme am interkulturellen Austausch mit Schulbesuch und Aufenthalt in einer Gastfamilie zur F\u00f6rderung interkultureller Kompetenzen.",
+    "value": "Completion of the one-year \u201cSecondary School Year Program 2019/2020\u201d exchange in the USA. Participation in an intercultural exchange, attending school and staying with a host family to develop intercultural skills."
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-python",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Hauptprogrammiersprache f\u00fcr Backend-Entwicklung",
+    "value": "Primary programming language for backend development"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-php",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Backend Sprache f\u00fcr Web development",
+    "value": "Backend language for web development"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-pandas",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Python Bibliothek um Daten zu Analysieren",
+    "value": "Python library for data analysis"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-java",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Sekund\u00e4re Backend Programmiersprache",
+    "value": "Secondary backend programming language"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-numpy",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Python Bibliothek um mit Arrays zu arbeiten",
+    "value": "Python library for working with arrays"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-supabase",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Cloud Database mit PostgresSQL",
+    "value": "Cloud database with PostgreSQL"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-postgresql",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Relationale Datenbanken und pgvector",
+    "value": "Relational databases and pgvector"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-mysql",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Relationale Datenbank",
+    "value": "Relational database"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-mongodb",
+    "locale": "en",
+    "field": "description",
+    "source_value": "NoSQL Datenbanken",
+    "value": "NoSQL databases"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-docker",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Containerization und Orchestrierung",
+    "value": "Containerisation and orchestration"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-tailwind",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Utility-first CSS Framework",
+    "value": "Utility-first CSS framework"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-nextjs",
+    "locale": "en",
+    "field": "description",
+    "source_value": "React Framework mit SSR",
+    "value": "React framework with SSR"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-typescript",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Type-safe JavaScript",
+    "value": "Type-safe JavaScript"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-bootstrap",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Frontend toolkit for responsive Web design ",
+    "value": "Frontend toolkit for responsive web design"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-react",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Component-based UI Development",
+    "value": "Component-based UI development"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-agile",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Scrum und Kanban",
+    "value": "Scrum and Kanban"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-leadership",
+    "locale": "en",
+    "field": "description",
+    "source_value": "F\u00fchrung von Entwicklerteams",
+    "value": "Leading development teams"
+  },
+  {
+    "source_table": "skills",
+    "slug": "skill-git",
+    "locale": "en",
+    "field": "description",
+    "source_value": "Version Control",
+    "value": "Version control"
+  }
+]
+$translations$::jsonb;
+    entry JSONB;
+    row_id INTEGER;
+    source_value JSONB;
+    matched_count INTEGER;
+    applied INTEGER := 0;
+BEGIN
+    FOR entry IN SELECT value FROM jsonb_array_elements(entries)
+    LOOP
+        EXECUTE format(
+            'SELECT id, to_jsonb(t) -> %L FROM public.%I AS t WHERE slug = $1 FOR SHARE',
+            entry->>'field', entry->>'source_table'
+        ) INTO row_id, source_value USING entry->>'slug';
+        GET DIAGNOSTICS matched_count = ROW_COUNT;
+        IF matched_count <> 1 THEN
+            RAISE EXCEPTION 'Expected one source row: %/% (found %)',
+                entry->>'source_table', entry->>'slug', matched_count;
+        END IF;
+        IF source_value IS DISTINCT FROM entry->'source_value' THEN
+            RAISE EXCEPTION 'Source changed: %/%/%. Refresh its translation before importing.',
+                entry->>'source_table', entry->>'slug', entry->>'field';
+        END IF;
+        INSERT INTO public.content_translations (source_table, source_id, locale, field, value)
+        VALUES (entry->>'source_table', row_id, 'en', entry->>'field', entry->'value')
+        ON CONFLICT (source_table, source_id, locale, field)
+        DO UPDATE SET value = EXCLUDED.value;
+        applied := applied + 1;
+    END LOOP;
+    RAISE NOTICE 'Applied % English translation fields.', applied;
+END
+$import$;
+
+SELECT source_table, count(*) AS english_fields
+FROM public.content_translations WHERE locale = 'en'
+GROUP BY source_table ORDER BY source_table;
+
+COMMIT;
