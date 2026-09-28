@@ -4,7 +4,7 @@ import {notFound} from 'next/navigation'
 import {routing} from '@/i18n/routing'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
+import Script from 'next/script'
 import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -129,7 +129,12 @@ export default async function RootLayout({children, params: {locale}}: {
           <Footer />
         </Providers>
         </NextIntlClientProvider>
-        <Analytics />
+        {/* Vercel serves this script itself once Web Analytics is enabled; the
+            @vercel/analytics package is not used because its optional SvelteKit
+            peer drags in vite 8, which conflicts with vitest's vite 7. */}
+        {process.env.VERCEL === '1' && (
+          <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
+        )}
       </body>
     </html>
   )
