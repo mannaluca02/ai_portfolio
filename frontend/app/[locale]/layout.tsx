@@ -4,6 +4,7 @@ import {notFound} from 'next/navigation'
 import {routing} from '@/i18n/routing'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -128,6 +129,7 @@ export default async function RootLayout({children, params: {locale}}: {
           <Footer />
         </Providers>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   )

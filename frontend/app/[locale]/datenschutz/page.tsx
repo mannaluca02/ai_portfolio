@@ -283,21 +283,40 @@ export default function DatenschutzPage({params}: {params: {locale: string}}) {
             <div className="space-y-4 text-text-secondary-light dark:text-text-secondary-dark">
               <div>
                 <p className="font-medium text-text-light dark:text-text-dark mb-2">
-                  Vercel Analytics (optional)
+                  Vercel Web Analytics
                 </p>
                 <p>
-                  Diese Website kann Vercel Analytics zur Analyse des Nutzerverhaltens verwenden.
-                  Vercel Analytics erhebt anonymisierte Daten ohne Verwendung von Cookies:
+                  Diese Website verwendet Vercel Web Analytics, um die Anzahl der Besuche und
+                  Seitenaufrufe statistisch auszuwerten. Dabei werden keine Cookies gesetzt und
+                  nichts im Browser gespeichert. Pro Seitenaufruf werden folgende Angaben erfasst:
                 </p>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
-                  <li>Seitenaufrufe</li>
-                  <li>Anonymisierte IP-Adressen</li>
-                  <li>Referrer-Informationen</li>
-                  <li>Browser und Geräteinformationen</li>
+                  <li>Zeitpunkt und aufgerufene Seite</li>
+                  <li>Referrer (die Seite, von der Sie gekommen sind)</li>
+                  <li>Ungefährer Standort (Land, Region, Stadt)</li>
+                  <li>Betriebssystem, Browser und Gerätetyp</li>
                 </ul>
                 <p className="mt-4">
-                  Es werden keine personenbezogenen Daten gespeichert und keine Cookies gesetzt.
-                  Die Daten sind nicht mit Ihrer Person verknüpfbar.
+                  Die IP-Adresse wird nicht gespeichert. Um Besuche zu zählen, bildet Vercel aus
+                  der Anfrage einen anonymen Hash, der nach 24 Stunden automatisch verworfen wird.
+                  Die Auswertung erfolgt ausschliesslich in aggregierter Form und lässt keinen
+                  Rückschluss auf Ihre Person zu.
+                </p>
+                <p className="mt-4">
+                  <span className="font-medium text-text-light dark:text-text-dark">Rechtsgrundlage:</span>{' '}
+                  Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Reichweitenmessung
+                  dieser Website).
+                </p>
+                <p className="mt-2">
+                  Weitere Informationen:{' '}
+                  <a
+                    href="https://vercel.com/docs/analytics/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-tekhelet hover:text-tekhelet/80 dark:text-tekhelet dark:hover:text-tekhelet/80 transition-colors"
+                  >
+                    Vercel Web Analytics Privacy
+                  </a>
                 </p>
               </div>
             </div>
